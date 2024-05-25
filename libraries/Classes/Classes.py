@@ -126,6 +126,8 @@ class Table:
 
         headers = ['Row Key', 'CF:Column', 'Timestamp', 'Value']
         data = pd.DataFrame(data, columns=headers)
+        # Delete duplicate rows
+        data = data.drop_duplicates()
         print(tabulate.tabulate(data, headers='keys', tablefmt='grid'))
         return data
 

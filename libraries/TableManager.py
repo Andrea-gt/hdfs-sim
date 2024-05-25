@@ -89,6 +89,21 @@ class TableManager:
                 return f"Table '{name}' created. Time: {total:.4f} s"
         except Exception as e:
             return f"Error: {e}"
+        
+    def get(self, table:str, rowKey:str):
+        if rowKey.strip() == '':
+            return pd.DataFrame({"Error": ["RowKey is empty"]})
+        
+        if table in self.tables:
+            data = self.tables[table].obtainTableInfoWithMetadata()
+            print(data.columns, rowKey, type(rowKey))
+            data = data[data['Row Key']== rowKey ]
+            return data
+        else:
+            return pd.DataFrame({"Error": ["Table not found"]})
+
+
+        
 
         
 

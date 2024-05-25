@@ -11,8 +11,8 @@ table.obtainTableInfo()
 
 dictTable = {'1': table.obtainTableInfo()}
 
-with open('./Tables/1.hfile', 'wb') as file:
-    pickle.dump(table, file)
+#with open('./Tables/1.hfile', 'wb') as file:
+#    pickle.dump(table, file)
 
 
 # GUI_manager()

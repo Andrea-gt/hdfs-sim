@@ -65,6 +65,14 @@ class GUI_manager:
             table = command[1]
             columns = command[2:]
             self.messageLabel(self.tableManager.createTable(table, columns))
+        elif operation == 'get':
+            table = command[1]
+            rowkey = command[2]
+            result = self.tableManager.get(table, rowkey)
+            self.change_table(result)
+        
+
+
 
 
     def mainloop(self):
