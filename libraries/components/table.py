@@ -33,11 +33,19 @@ class Table:
                               width=200,
                               height=40,
                               border_width=10,
-                              border_color='#252525'
+                              border_color='#252525',
+                              write=True,
+                              corner_radius=30
                               )
+
+    
+        # Añadir binding a cada celda de la tabla
+        for element in self.table.frame.values():
+            if isinstance(element, customtkinter.CTkEntry):
+                element.configure(state='readonly', border_width=0)
+
         
-        # Change header font
-                              
+        # Change header font          
         self.table.pack(fill="both", expand=True)
         self.table_canvas.create_window(0, 0, window=self.table_frame, anchor="nw")
         self.table_canvas.update_idletasks()

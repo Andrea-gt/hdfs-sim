@@ -12,6 +12,8 @@ class InputCommand:
         self.label.pack(side=customtkinter.LEFT, padx=10)
         # Create a entry
         self.entry = customtkinter.CTkEntry(self.frame, width=500)
+        # Make entry use function sendFunc when the user press enter
+        self.entry.bind("<Return>", lambda event:sendFunc(self.entry.get()))
         self.entry.pack(side=customtkinter.LEFT)
         # Create a button
         self.button = customtkinter.CTkButton(self.frame, text="Send", 
