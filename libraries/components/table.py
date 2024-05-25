@@ -30,7 +30,7 @@ class Table:
                               values=[self.columns]+self.dataFrame.values.tolist(),
                               header_color='#265c8c',
                               font=('Helvetica', 15),
-                              width=200,
+                              width=238,
                               height=40,
                               border_width=10,
                               border_color='#252525',
@@ -62,9 +62,9 @@ class Table:
         self.master.update()
 
     def _on_mousewheel(self, event):
-        if len(self.dataFrame) > 12:
+        if len(self.dataFrame) > 11:
             self.table_canvas.yview_scroll(-1*(event.delta//120), "units")
-        if len(self.columns) > 5:
+        if len(self.columns) > 3:
             self.table_canvas.xview_scroll(-1*(event.delta//120), "units")
             
 
