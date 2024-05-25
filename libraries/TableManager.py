@@ -1,7 +1,7 @@
 from .Classes import Table
 import pickle
 import os
-from typing import Dict
+from typing import Dict, List
 import pandas as pd
 import time
 
@@ -70,6 +70,29 @@ class TableManager:
                 return f"Table '{table}' is {'enabled' if self.tables[table].isEnable else 'disabled'}. Time: {total:.4f} s"
         else:
             return f"Table '{table}' not found."
+        
+    def createTable(self, name, columsFamilys:List[str]):
+        initTime = time.perf_counter()
+        try:
+            newTable = Table({cf: [] for cf in columsFamilys})
+            self.tables[name] = newTable
+
+            with open(f"{self.tableDirectory}/{name}.hfile", 'wb') as file:
+                pickle.dump(newTable, file)
+
+            endTime = time.perf_counter()
+            total = endTime - initTime
+            # Config total time to show the time in seconds or milliseconds and only use 4 decimal places
+            if total < 1:
+                return f"Table '{name}' created. Time: {total * 1000:.4f} ms"
+            else:
+                return f"Table '{name}' created. Time: {total:.4f} s"
+        except Exception as e:
+            return f"Error: {e}"
+
+        
+
+
         
 
 

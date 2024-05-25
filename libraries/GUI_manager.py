@@ -61,6 +61,10 @@ class GUI_manager:
         elif operation == 'isenable':
             table = command[1]
             self.messageLabel(self.tableManager.isEnable(table))
+        elif operation == 'create':
+            table = command[1]
+            columns = command[2:]
+            self.messageLabel(self.tableManager.createTable(table, columns))
 
 
     def mainloop(self):

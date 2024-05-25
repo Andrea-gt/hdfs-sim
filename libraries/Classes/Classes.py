@@ -23,19 +23,23 @@ class Column:
 class ColumnFamily:
     def __init__(self, name: str, columns:List[str]=[]):
         self.name = name
-        self.columns = [Column(column) for column in columns]
+        self.columns = {column:Column(column) for column in columns}
 
     def insertColumn(self, column: str):
-        self.columns.append(Column(column))
+        self.columns[column] = Column(column)
     
     def insertRow(self, rowKey, values: Dict[str, Any]):
-        for column in self.columns:
-            if column.name in values:
-                column.insertRow(rowKey, values[column.name])
+        for column in values:
+            if column in self.columns:
+                self.columns[column].insertRow(rowKey, values[column])
+            else:
+                self.insertColumn(column)
+                self.columns[column].insertRow(rowKey, values[column])
+
 
     def obtainColumnFamilyInfo(self):
         rows = {}
-        for column in self.columns:
+        for column in self.columns.values():
             for rowKey in column.obtainColumnInfo():
                 if rowKey not in rows:
                     rows[rowKey] = {}
@@ -45,7 +49,7 @@ class ColumnFamily:
     
     def obtainColumnFamilyInfoWithMetadata(self):
         data = []
-        for column in self.columns:
+        for column in self.columns.values():
             metadataColumn = column.obtainColumnInfoWithMetadata()
             # insert the column name in the second position
             for row in metadataColumn:
