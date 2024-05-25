@@ -7,10 +7,14 @@ import tabulate
 class Column:
     def __init__(self, name, rows: Dict[str, Any]={}):
         self.name = name
-        self.rows = {rowKey: Cell(rows[rowKey]) for rowKey in rows}
+        self.rows: Dict[str, 'Cell'] = {rowKey: Cell(rows[rowKey]) for rowKey in rows}
 
     def insertRow(self, rowKey, value):
         self.rows[rowKey] = Cell(value)
+
+    def obtainColumnInfoWithMetadata(self):
+        data = [ [rowKey]+ self.rows[rowKey].obtainActualVersion() for rowKey in self.rows]
+        return data
 
     def obtainColumnInfo(self):
         data = {rowKey: self.rows[rowKey].getActualValue() for rowKey in self.rows}
@@ -38,12 +42,28 @@ class ColumnFamily:
                 rows[rowKey][f'{self.name}{':' if self.name != '' else ''}{column.name}'] = column.rows[rowKey].getActualValue()
 
         return rows
+    
+    def obtainColumnFamilyInfoWithMetadata(self):
+        data = []
+        for column in self.columns:
+            metadataColumn = column.obtainColumnInfoWithMetadata()
+            # insert the column name in the second position
+            for row in metadataColumn:
+                row.insert(1, f'{self.name}{':' if self.name != '' else ''}{column.name}')
+                data.append(row)
+            data+=metadataColumn
+
+        return data
+            
         
 
 class Value:
     def __init__(self, value):
         self.creationDate = datetime.datetime.now().timestamp()
         self.value = value
+
+    def obtainVersion(self):
+        return [self.creationDate, self.value]
 
 class Cell:
     def __init__(self, value):
@@ -53,8 +73,10 @@ class Cell:
         self.values.append(Value(newValue))
 
     def getActualValue(self):
-        print(self.values[-1].value)
         return self.values[-1].value
+    
+    def obtainActualVersion(self):
+        return self.values[-1].obtainVersion()
 
 class Table:
     def __init__(self, columns:Dict[str, List[str]]):
@@ -74,6 +96,7 @@ class Table:
             if cf.name in rowData:
                 cf.insertRow(rowKey, rowData[cf.name])
 
+
     def obtainTableInfo(self):
         data = {}
         for cf in self.columnFamilies:
@@ -88,6 +111,20 @@ class Table:
 
         print(tabulate.tabulate(data, headers='keys', tablefmt='grid'))
         return data
+    
+    def obtainTableInfoWithMetadata(self):
+        data = []
+        for cf in self.columnFamilies:
+            metadataCF = cf.obtainColumnFamilyInfoWithMetadata()
+            for row in metadataCF:
+                data.append(row)
+            data+=metadataCF
+
+        headers = ['Row Key', 'CF:Column', 'Timestamp', 'Value']
+        data = pd.DataFrame(data, columns=headers)
+        print(tabulate.tabulate(data, headers='keys', tablefmt='grid'))
+        return data
+
 
 
 
