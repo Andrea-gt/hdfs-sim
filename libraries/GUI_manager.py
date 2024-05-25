@@ -1,8 +1,9 @@
 import customtkinter
 from .components import InputCommand, Table
 import pandas as pd
-from .Classes import Table as TableClass
+from .Classes import Table as TableClass, parse_command
 from .TableManager import TableManager
+from typing import List, Dict, Any
 
 class GUI_manager:
     def __init__(self, tableDirectory:str):
@@ -44,42 +45,57 @@ class GUI_manager:
 
     def obtainOperation(self, command):
         print(f"Command: {command}")
-        command = command.split(' ')
-        operation = command[0].lower()
+        operation, variables = parse_command(command)
 
         if operation == 'list':
             self.change_table(self.tableManager.list_())
         elif operation == 'scan':
-            table = command[1]
+            if 'table' not in variables:
+                self.messageLabel("Table not found in command. Please, insert a table name.")
+                return
+            table:str = variables['table'] if isinstance(variables['table'], str) else ''
             self.change_table(self.tableManager.scan(table))
         elif operation == 'disable':
-            table = command[1]
+            if 'table' not in variables:
+                self.messageLabel("Table not found in command. Please, insert a table name.")
+                return
+            table:str = variables['table'] if isinstance(variables['table'], str) else ''
             self.messageLabel(self.tableManager.disable(table))
         elif operation == 'enable':
-            table = command[1]
+            if 'table' not in variables:
+                self.messageLabel("Table not found in command. Please, insert a table name.")
+                return
+            table:str = variables['table'] if isinstance(variables['table'], str) else ''
             self.messageLabel(self.tableManager.enable(table))
         elif operation == 'isenable':
-            table = command[1]
+            if 'table' not in variables:
+                self.messageLabel("Table not found in command. Please, insert a table name.")
+                return
+            table:str = variables['table'] if isinstance(variables['table'], str) else ''
             self.messageLabel(self.tableManager.isEnable(table))
         elif operation == 'create':
-            table = command[1]
-            columns = command[2:]
+            if 'table' not in variables:
+                self.messageLabel("Table not found in command. Please, insert a table name.")
+                return
+            table:str = variables['table'] if isinstance(variables['table'], str) else ''
+            if 'columns' not in variables:
+                self.messageLabel("Columns not found in command. Please, insert columns.")
+                return
+            columns:List[str] = variables['columns'] if isinstance(variables['columns'], list) else [variables['columns']]
             self.messageLabel(self.tableManager.createTable(table, columns))
         elif operation == 'get':
-            table = command[1]
-            rowkey = command[2]
+            if 'table' not in variables:
+                self.messageLabel("Table not found in command. Please, insert a table name.")
+                return
+            table:str = variables['table'] if isinstance(variables['table'], str) else ''
+            if 'rowkey' not in variables:
+                self.messageLabel("Rowkey not found in command. Please, insert a rowkey.")
+                return
+            rowkey:str = variables['rowkey'] if isinstance(variables['rowkey'], str) else ''
             result = self.tableManager.get(table, rowkey)
             self.change_table(result)
         
 
-
-
-
     def mainloop(self):
         self.app.mainloop()
-
-
-
-
-
 

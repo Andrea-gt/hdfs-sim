@@ -113,7 +113,6 @@ class Table:
         # Make the data a pandas dataframe, where the rowKey is the index
         data = pd.DataFrame(data).T
 
-        print(tabulate.tabulate(data, headers='keys', tablefmt='grid'))
         return data
     
     def obtainTableInfoWithMetadata(self):
