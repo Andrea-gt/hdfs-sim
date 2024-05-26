@@ -170,6 +170,32 @@ class GUI_manager:
                 # Call the drop_all method on tableManager with the regex provided and display the result.
                 self.messageLabel(self.tableManager.dropAll(regex))
 
+        elif operation == 'delete':
+            # Validate that the required variables 'table', 'row', 'column_name', and 'timestamp' are present in the input.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row', 'column_name', 'timestamp'])
+            if validation:
+                try:
+                    # Extract and convert timestamp to an integer.
+                    table, row, column_name, timestamp_str = returnStatement
+                    timestamp_int = int(timestamp_str)
+                except ValueError:
+                    self.messageLabel("Error: Invalid timestamp format. Please provide a valid timestamp.")
+                    return  # Exit if timestamp conversion fails
+
+                # Call the delete method on the tableManager with the validated parameters and display the result.
+                self.messageLabel(self.tableManager.delete(table, row, column_name, timestamp_int))
+
+        elif operation == 'deleteall':
+            # Validate that the required variables 'table', 'row', 'column_name', and 'timestamp' are present in the input.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row'])
+            if validation:
+                    # Unpack the returnStatement list into individual variables.
+                    table, row = returnStatement
+                    # Call the delete method on the tableManager with the validated parameters and display the result.
+                    self.messageLabel(self.tableManager.deleteAll(table, row))
+
+
+
     def mainloop(self):
         self.app.mainloop()
 

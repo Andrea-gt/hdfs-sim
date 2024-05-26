@@ -226,8 +226,6 @@ class TableManager:
         # Find all table names that match the regular expression pattern.
         regex_match = [key for key in self.tables.keys() if pattern.match(key)]
 
-        print(regex_match)
-
         results = []
 
         # Iterate through each matched table name and drop the table.
@@ -245,13 +243,52 @@ class TableManager:
         
         # Format and return the message indicating the total time taken.
         return self.outputFormatter(time_taken, 0)
+    
+    def delete(self, table: str, row: str, column_name: str, timestamp: int):
+        """
+        Deletes an entry from the table based on the provided parameters.
 
+        Args:
+            table (str): The name of the table from which to delete the entry.
+            row (str): The row identifier of the entry to delete.
+            column_name (str): The column name of the entry to delete.
+            timestamp (int): The timestamp associated with the entry to delete.
+
+        Returns:
+            str: A formatted message indicating the total time taken for the operation.
+        """
+        # Record the start time for performance measurement.
+        initTime = time.perf_counter()
+
+        # Split the column_name parameter to retrive the column family and column name.
+        family_name, column_name = column_name.split(':')
+
+        # Check if the specified table exists in the database.
+        if table in self.tables:
+            # Retrieve the data for the specified table.
+            data = self.tables[table]
+            
+            # Iterate through each column family in the table.
+            for family in data.columnFamilies:
+                if family.name == family_name:
+                    # Iterate through each column in the column family.
+                    for column in family.columns.keys():
+                        if column == column_name:
+                            # Get the rows associated with the current column.
+                            cell_values = family.columns[column].rows[row].values
+                            for i, value in enumerate(cell_values):
+                                if value.creationDate == timestamp:
+                                    family.columns[column].rows[row].values.pop(i)
+            
+            # Calculate the total time taken for the operation.
+            time_taken = time.perf_counter() - initTime
+            
+            # Return the time taken in milliseconds.
+            return self.outputFormatter(time_taken, 0)
+
+        else:
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
         
-
-        
-
-
-        
-
-
-
+    def deleteAll(self, table: str, row: str):
+        pass
