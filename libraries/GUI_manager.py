@@ -131,7 +131,7 @@ class GUI_manager:
                 self.messageLabel("Table not found in command. Please, insert a table name.")
                 return
             table:str = variables['table'] if isinstance(variables['table'], str) else ''
-            ## CALL DROP TABLE
+            self.messageLabel(self.tableManager.drop(table))
 
     def mainloop(self):
         self.app.mainloop()

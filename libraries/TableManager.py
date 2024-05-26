@@ -21,7 +21,7 @@ class TableManager:
         
         print(f"Tables: {self.tables}")
 
-    def outputFormatter(time, rows):
+    def outputFormatter(self, time, rows):
         """
         Formats the output message based on the execution time and number of rows.
 
@@ -148,11 +148,8 @@ class TableManager:
                     # Add the rows to the set of unique rows.
                     unique_rows.update(rows)
             
-            # Record the end time for performance measurement.
-            endTime = time.perf_counter()
-            
             # Calculate the total time taken for the operation.
-            time_taken = endTime - initTime
+            time_taken = time.perf_counter() - initTime
             
             # Return the count of unique rows and the time taken in milliseconds.
             return self.outputFormatter(time_taken, len(unique_rows))
@@ -181,10 +178,7 @@ class TableManager:
             if self.tables[table].isEnable:
                 # Return a message indicating the table must be disabled before dropping.
                 return f"Action required: The table '{table}' must be disabled before it can be dropped."
-            else:
-                # Remove the table from the database's tables dictionary.
-                del self.tables[table]
-                    
+            else:   
                 # Construct the file path for the table's file.
                 table_file_path = os.path.join(self.tableDirectory, f"{table}.hfile")
                     
@@ -195,7 +189,7 @@ class TableManager:
                     # Remove the table from the database's tables dictionary.
                     del self.tables[table]
                     # Calculate the total time taken for the operation.
-                    time_taken = initTime - time.perf_counter()
+                    time_taken = time.perf_counter() - initTime
 
                     return self.outputFormatter(time_taken, 0)
         else:
