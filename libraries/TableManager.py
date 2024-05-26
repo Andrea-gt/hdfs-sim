@@ -226,12 +226,22 @@ class TableManager:
         # Find all table names that match the regular expression pattern.
         regex_match = [key for key in self.tables.keys() if pattern.match(key)]
 
+        print(regex_match)
+
+        results = []
+
         # Iterate through each matched table name and drop the table.
         for table in regex_match:
             result = self.drop(table)
+            if "Action" in result or "Error" in result:
+                results.append(result)
         
         # Calculate the total time taken for the operation.
         time_taken = time.perf_counter() - initTime
+
+        if results:
+            # Format and return the message indicating the total time taken and the results.
+            return f"{"\n".join(results)}"
         
         # Format and return the message indicating the total time taken.
         return self.outputFormatter(time_taken, 0)
