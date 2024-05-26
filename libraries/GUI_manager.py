@@ -19,8 +19,6 @@ class GUI_manager:
         self.inputCommand = InputCommand(self.app, self.obtainOperation)
         self.tableManager = TableManager(tableDirectory)
         
-        
-
     def on_dropdown_select(self, value):
         print(value)
 
@@ -85,7 +83,7 @@ class GUI_manager:
                 return
             table:str = variables['table'] if isinstance(variables['table'], str) else ''
             self.messageLabel(self.tableManager.enable(table))
-        elif operation == 'isEnable':
+        elif operation == 'is_disabled':
             if 'table' not in variables:
                 self.messageLabel("Table not found in command. Please, insert a table name.")
                 return
@@ -114,7 +112,13 @@ class GUI_manager:
             result = self.tableManager.get(table, rowkey)
             total_time = time.perf_counter() - initial_time
             self.change_table(result, total_time)
-        
+
+        elif operation == 'count':
+            if 'table' not in variables:
+                self.messageLabel("Table not found in command. Please, insert a table name.")
+                return
+            table:str = variables['table'] if isinstance(variables['table'], str) else ''
+            self.messageLabel(self.tableManager.count(table))
 
     def mainloop(self):
         self.app.mainloop()

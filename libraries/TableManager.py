@@ -101,6 +101,24 @@ class TableManager:
             return data
         else:
             return pd.DataFrame({"Error": ["Table not found"]})
+        
+    def count(self, table:str):
+        unique_rows = set()
+        initTime = time.perf_counter()
+
+        if table in self.tables:
+            for family in table.columnFamilies:
+                for column in family.comlumn:
+                    rows = column.rows.keys()
+                    unique_rows.update(rows)
+        
+            count = len(unique_rows)
+            endTime = time.perf_counter()
+            total = endTime - initTime
+            return f"{count} row(s) in {total * 1000:.4f}s"
+        
+        else:
+            return f"Table '{table}' not found."
 
 
         

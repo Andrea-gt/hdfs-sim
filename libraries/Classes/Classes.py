@@ -36,7 +36,6 @@ class ColumnFamily:
                 self.insertColumn(column)
                 self.columns[column].insertRow(rowKey, values[column])
 
-
     def obtainColumnFamilyInfo(self):
         rows = {}
         for column in self.columns.values():
@@ -58,8 +57,6 @@ class ColumnFamily:
             data+=metadataColumn
 
         return data
-            
-        
 
 class Value:
     def __init__(self, value):
@@ -100,7 +97,6 @@ class Table:
             if cf.name in rowData:
                 cf.insertRow(rowKey, rowData[cf.name])
 
-
     def obtainTableInfo(self):
         data = {}
         for cf in self.columnFamilies:
@@ -112,7 +108,6 @@ class Table:
 
         # Make the data a pandas dataframe, where the rowKey is the index
         data = pd.DataFrame(data).T
-
         return data
     
     def obtainTableInfoWithMetadata(self):
