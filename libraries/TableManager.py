@@ -107,9 +107,10 @@ class TableManager:
         initTime = time.perf_counter()
 
         if table in self.tables:
-            for family in table.columnFamilies:
-                for column in family.comlumn:
-                    rows = column.rows.keys()
+            data = self.tables[table]
+            for family in data.columnFamilies:
+                for column in family.columns.keys():
+                    rows = family.columns[column].rows.keys()
                     unique_rows.update(rows)
         
             count = len(unique_rows)
