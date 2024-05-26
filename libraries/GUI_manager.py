@@ -54,6 +54,30 @@ class GUI_manager:
         self.message = customtkinter.CTkLabel(self.app, text=message)
         self.message.pack()
 
+    def validation(self, variables, expectedValues):
+        """
+        Validates if the expected values are present in the variables dictionary.
+
+        Args:
+            variables (dict): The dictionary containing the variables to be validated.
+            expectedValues (list): A list of expected keys to check in the variables dictionary.
+
+        Returns:
+            tuple: A tuple containing a boolean indicating success or failure, and the value associated with the expected keys (or an empty string).
+        """
+        returnStatement = []
+        
+        for key in expectedValues:
+            # Check if the expected key is in the variables dictionary.
+            if key not in variables:
+                # If the key is missing, display an informative message and return False.
+                self.messageLabel(f"Error: The required variable '{key}' is missing. Please provide '{key}'.")
+                return False, ''
+            
+            # If the key is present, ensure the value is a string.
+            returnStatement.append(variables[key] if isinstance(variables[key], str) else '')
+        return True, returnStatement
+
     def obtainOperation(self, command):
         print(f"Command: {command}")
         operation, variables = parse_command(command)
@@ -63,7 +87,7 @@ class GUI_manager:
             result = self.tableManager.list_()
             total_time = time.perf_counter() - initial_time
             self.change_table(result, total_time)
-            
+
         elif operation == 'scan':
             if 'table' not in variables:
                 self.messageLabel("Table not found in command. Please, insert a table name.")
@@ -120,18 +144,31 @@ class GUI_manager:
             self.change_table(result, total_time)
 
         elif operation == 'count':
-            if 'table' not in variables:
-                self.messageLabel("Table not found in command. Please, insert a table name.")
-                return
-            table:str = variables['table'] if isinstance(variables['table'], str) else ''
-            self.messageLabel(self.tableManager.count(table))
-        
+            # Check if 'table' is in the variables dictionary.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            if validation:
+                # Extract the table name from variables and ensure it's a string.
+                table: str = returnStatement[0]
+                # Call the count method on tableManager with the table name and display the result.
+                self.messageLabel(self.tableManager.count(table))
+
         elif operation == 'drop':
-            if 'table' not in variables:
-                self.messageLabel("Table not found in command. Please, insert a table name.")
-                return
-            table:str = variables['table'] if isinstance(variables['table'], str) else ''
-            self.messageLabel(self.tableManager.drop(table))
+            # Check if 'table' is in the variables dictionary.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            if validation:
+                # Extract the table name from variables and ensure it's a string.
+                table: str = returnStatement[0]
+                # Call the drop method on tableManager with the table name and display the result.
+                self.messageLabel(self.tableManager.drop(table))
+
+        elif operation == 'drop_all':
+            # Check if 'regex' is in the variables dictionary.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['regex'])
+            if validation:
+                # Extract the regex from variables and ensure it's a string.
+                regex: str = returnStatement[0]
+                # Call the drop_all method on tableManager with the regex provided and display the result.
+                self.messageLabel(self.tableManager.dropAll(regex))
 
     def mainloop(self):
         self.app.mainloop()

@@ -1,9 +1,19 @@
-from .Classes import Table
-import pickle
-import os
-from typing import Dict, List
-import pandas as pd
-import time
+# Standard library imports
+import os   # Provides a way of using operating system dependent functionality like reading or writing to the file system
+import time # Provides various time-related functions
+import re   # Provides support for regular expressions
+
+import pickle  # Provides functions for serializing and deserializing Python object structures
+
+# Third-party library imports
+import pandas as pd  # Provides data structures and data analysis tools (if needed, this should be installed via pip)
+
+# Local application/library specific imports
+from .Classes import Table  # Imports the Table class from the local Classes module
+
+# Typing imports for type hinting
+from typing import Dict, List  # Provides support for type hints, Dict and List in this case
+
 
 class TableManager:
     def __init__(self, tableDirectory:str) -> None:
@@ -195,6 +205,36 @@ class TableManager:
         else:
             # Return an error message if the table does not exist.
             return f"Error: The table '{table}' could not be found."
+        
+    
+    def dropAll(self, regex: str):
+        """
+        Drops all tables matching the given regular expression pattern.
+
+        Args:
+            regex (str): The regular expression pattern to match table names.
+
+        Returns:
+            str: A formatted message indicating the total time taken for the operation.
+        """
+        # Record the start time for performance measurement.
+        initTime = time.perf_counter()
+        
+        # Compile the regular expression pattern.
+        pattern = re.compile(regex)
+        
+        # Find all table names that match the regular expression pattern.
+        regex_match = [key for key in self.tables.keys() if pattern.match(key)]
+
+        # Iterate through each matched table name and drop the table.
+        for table in regex_match:
+            result = self.drop(table)
+        
+        # Calculate the total time taken for the operation.
+        time_taken = time.perf_counter() - initTime
+        
+        # Format and return the message indicating the total time taken.
+        return self.outputFormatter(time_taken, 0)
 
         
 
