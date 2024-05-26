@@ -21,6 +21,21 @@ class TableManager:
         
         print(f"Tables: {self.tables}")
 
+    def outputFormatter(time, rows):
+        """
+        Formats the output message based on the execution time and number of rows.
+
+        Args:
+            time (float): The execution time in seconds.
+            rows (int): The number of rows.
+
+        Returns:
+            str: A formatted message indicating the number of rows and the execution time.
+        """
+        # Determine the time unit and format accordingly.
+        time_str = f"{time * 1000:.4f} ms" if time < 1 else f"{time:.4f} s"
+        return f"{rows} row(s) in {time_str}"
+
     def scan(self, table:str):
         if table in self.tables:
             return self.tables[table].obtainTableInfoWithMetadata()
@@ -102,25 +117,90 @@ class TableManager:
         else:
             return pd.DataFrame({"Error": ["Table not found"]})
         
-    def count(self, table:str):
+    def count(self, table: str):
+        """
+        Counts the number of unique rows in the specified table.
+
+        Args:
+            table (str): The name of the table to count rows in.
+
+        Returns:
+            str: A message indicating the number of unique rows and the time taken to count them,
+                or an error message if the table does not exist.
+        """
+        # Initialize a set to store unique row identifiers.
         unique_rows = set()
+        
+        # Record the start time for performance measurement.
         initTime = time.perf_counter()
 
+        # Check if the specified table exists in the database.
         if table in self.tables:
+            # Retrieve the data for the specified table.
             data = self.tables[table]
+            
+            # Iterate through each column family in the table.
             for family in data.columnFamilies:
+                # Iterate through each column in the column family.
                 for column in family.columns.keys():
+                    # Get the rows associated with the current column.
                     rows = family.columns[column].rows.keys()
+                    # Add the rows to the set of unique rows.
                     unique_rows.update(rows)
-        
-            count = len(unique_rows)
+            
+            # Record the end time for performance measurement.
             endTime = time.perf_counter()
-            total = endTime - initTime
-            return f"{count} row(s) in {total * 1000:.4f}s"
+            
+            # Calculate the total time taken for the operation.
+            time_taken = endTime - initTime
+            
+            # Return the count of unique rows and the time taken in milliseconds.
+            return self.outputFormatter(time_taken, len(unique_rows))
         
         else:
-            return f"Table '{table}' not found."
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
 
+    def drop(self, table: str):
+        """
+        Drops the specified table from the database.
+
+        Args:
+            table (str): The name of the table to be dropped.
+
+        Returns:
+            str: A message indicating the result of the drop operation,
+                or an error message if the table does not exist.
+        """
+        # Record the start time for performance measurement.
+        initTime = time.perf_counter()
+
+        # Check if the specified table exists in the database.
+        if table in self.tables:
+            # Check if the table is currently enabled.
+            if self.tables[table].isEnable:
+                # Return a message indicating the table must be disabled before dropping.
+                return f"Action required: The table '{table}' must be disabled before it can be dropped."
+            else:
+                # Remove the table from the database's tables dictionary.
+                del self.tables[table]
+                    
+                # Construct the file path for the table's file.
+                table_file_path = os.path.join(self.tableDirectory, f"{table}.hfile")
+                    
+                # Check if the table's file exists in the file system.
+                if os.path.exists(table_file_path):
+                    # Delete the table's file.
+                    os.remove(table_file_path)
+                    # Remove the table from the database's tables dictionary.
+                    del self.tables[table]
+                    # Calculate the total time taken for the operation.
+                    time_taken = initTime - time.perf_counter()
+
+                    return self.outputFormatter(time_taken, 0)
+        else:
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
 
         
 

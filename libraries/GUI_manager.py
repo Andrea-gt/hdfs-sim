@@ -63,6 +63,7 @@ class GUI_manager:
             result = self.tableManager.list_()
             total_time = time.perf_counter() - initial_time
             self.change_table(result, total_time)
+            
         elif operation == 'scan':
             if 'table' not in variables:
                 self.messageLabel("Table not found in command. Please, insert a table name.")
@@ -71,24 +72,28 @@ class GUI_manager:
             initial_time = time.perf_counter()
             result = self.tableManager.scan(table)
             self.change_table(result, time.perf_counter() - initial_time)
+
         elif operation == 'disable':
             if 'table' not in variables:
                 self.messageLabel("Table not found in command. Please, insert a table name.")
                 return
             table:str = variables['table'] if isinstance(variables['table'], str) else ''
             self.messageLabel(self.tableManager.disable(table))
+            
         elif operation == 'enable':
             if 'table' not in variables:
                 self.messageLabel("Table not found in command. Please, insert a table name.")
                 return
             table:str = variables['table'] if isinstance(variables['table'], str) else ''
             self.messageLabel(self.tableManager.enable(table))
-        elif operation == 'is_disabled':
+
+        elif operation == 'is_enabled':
             if 'table' not in variables:
                 self.messageLabel("Table not found in command. Please, insert a table name.")
                 return
             table:str = variables['table'] if isinstance(variables['table'], str) else ''
             self.messageLabel(self.tableManager.isEnable(table))
+
         elif operation == 'create':
             if 'table' not in variables:
                 self.messageLabel("Table not found in command. Please, insert a table name.")
@@ -99,6 +104,7 @@ class GUI_manager:
                 return
             columns:List[str] = variables['columns'] if isinstance(variables['columns'], list) else [variables['columns']]
             self.messageLabel(self.tableManager.createTable(table, columns))
+
         elif operation == 'get':
             if 'table' not in variables:
                 self.messageLabel("Table not found in command. Please, insert a table name.")
@@ -119,6 +125,13 @@ class GUI_manager:
                 return
             table:str = variables['table'] if isinstance(variables['table'], str) else ''
             self.messageLabel(self.tableManager.count(table))
+        
+        elif operation == 'drop':
+            if 'table' not in variables:
+                self.messageLabel("Table not found in command. Please, insert a table name.")
+                return
+            table:str = variables['table'] if isinstance(variables['table'], str) else ''
+            ## CALL DROP TABLE
 
     def mainloop(self):
         self.app.mainloop()
