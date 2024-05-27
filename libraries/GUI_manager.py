@@ -175,15 +175,15 @@ class GUI_manager:
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row', 'column_name', 'timestamp'])
             if validation:
                 try:
-                    # Extract and convert timestamp to an integer.
+                    # Extract and convert timestamp to float.
                     table, row, column_name, timestamp_str = returnStatement
-                    timestamp_int = int(timestamp_str)
+                    timestamp_float = float(timestamp_str)
                 except ValueError:
                     self.messageLabel("Error: Invalid timestamp format. Please provide a valid timestamp.")
                     return  # Exit if timestamp conversion fails
 
                 # Call the delete method on the tableManager with the validated parameters and display the result.
-                self.messageLabel(self.tableManager.delete(table, row, column_name, timestamp_int))
+                self.messageLabel(self.tableManager.delete(table, row, column_name, timestamp_float))
 
         elif operation == 'deleteall':
             # Validate that the required variables 'table', 'row', 'column_name', and 'timestamp' are present in the input.
