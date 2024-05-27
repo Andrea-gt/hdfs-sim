@@ -244,7 +244,7 @@ class TableManager:
         # Format and return the message indicating the total time taken.
         return self.outputFormatter(time_taken, 0)
     
-    def delete(self, table: str, row: str, column_name: str, timestamp: int):
+    def delete(self, table: str, row: str, column_name: str, timestamp: float):
         """
         Deletes an entry from the table based on the provided parameters.
 
@@ -268,17 +268,47 @@ class TableManager:
             # Retrieve the data for the specified table.
             data = self.tables[table]
             
-            # Iterate through each column family in the table.
-            for family in data.columnFamilies:
-                if family.name == family_name:
-                    # Iterate through each column in the column family.
-                    for column in family.columns.keys():
-                        if column == column_name:
-                            # Get the rows associated with the current column.
-                            cell_values = family.columns[column].rows[row].values
-                            for i, value in enumerate(cell_values):
-                                if value.creationDate == timestamp:
-                                    family.columns[column].rows[row].values.pop(i)
+            found = False  # Initialize a flag to indicate if the value is found
+
+            try:
+                # Iterate through each column family in the data
+                for family in data.columnFamilies:
+                    # Check if the column family matches the specified family name
+                    if family.name == family_name:
+
+                        # Iterate through each column in the column family
+                        for column in family.columns.keys():
+                            # Check if the column matches the specified column name
+                            if column == column_name:
+
+                                # Get the rows associated with the current column
+                                cell_values = family.columns[column].rows[row].values
+
+                                # Iterate through each value in the cell
+                                for i, value in enumerate(cell_values):
+                                    # Check if the value's creation date matches the specified timestamp
+                                    if value.creationDate == timestamp:
+
+                                        # Remove the value from the list of values
+                                        family.columns[column].rows[row].values.pop(i)
+                                        found = True  # Set the flag to True as the value is found
+
+                                # If the row is empty after removing the value, delete the row
+                                if family.columns[column].rows[row].isEmpty():
+                                    del family.columns[column].rows[row]
+
+            except KeyError:
+                # Handle the case where the specified row key is not found
+                return f"Error: The specified row key was not found in the table."
+
+            # Check if the value was not found during the iteration
+            if not found:
+                return f"Error: The value could not be found."
+            else:
+                # Save the updated data back to the file if the value was found and removed
+                with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as outf:
+                    pickle.dump(data, outf)
+
             
             # Calculate the total time taken for the operation.
             time_taken = time.perf_counter() - initTime
@@ -291,7 +321,41 @@ class TableManager:
             return f"Error: The table '{table}' could not be found."
         
     def deleteAll(self, table: str, row: str):
-        pass
+        # Record the start time for performance measurement.
+        initTime = time.perf_counter()
+
+        # Check if the specified table exists in the database.
+        if table in self.tables:
+            # Retrieve the data for the specified table.
+            data = self.tables[table]
+            
+            found = False  # Initialize a flag to indicate if the value is found
+
+            # Iterate through each column family in the data
+            for family in data.columnFamilies:
+                # Iterate through each column in the column family
+                for column in family.columns.keys():
+                    if row in family.columns[column].rows.keys():
+                        del family.columns[column].rows[row]
+                        found = True
+
+            # Check if the value was not found during the iteration
+            if not found:
+                return f"Error: The value could not be found."
+            else:
+                # Save the updated data back to the file if the value was found and removed
+                with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as outf:
+                    pickle.dump(data, outf)
+
+            # Calculate the total time taken for the operation.
+            time_taken = time.perf_counter() - initTime
+            
+            # Return the time taken in milliseconds.
+            return self.outputFormatter(time_taken, 0)
+
+        else:
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
 
     def put(self, table:str, rowKey:str, column_family:str, column:str, value:str ):
         initialTime = time.perf_counter()

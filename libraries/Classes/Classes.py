@@ -108,6 +108,9 @@ class Cell:
     def obtainActualVersion(self):
         return self.values[-1].obtainVersion()
 
+    def isEmpty(self):
+        return len(self.values) == 0
+
 class Table:
     def __init__(self, columns:Dict[str, List[str]]):
         print(columns, 'columns')
