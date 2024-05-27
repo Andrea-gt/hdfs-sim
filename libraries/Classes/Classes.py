@@ -262,6 +262,15 @@ class Cell:
     
     def tiemsStamp(self):
         return len(self.values)
+    
+    def __eq__(self, value: object) -> bool:
+        if isinstance(value, str):
+            return self.getActualValue() == value
+        if isinstance(value, Cell):
+            return value.rowKey == self.rowKey
+        
+        return False
+        
 
 class Table:
     def __init__(self, columns:Dict[str, List[str]], indexed=False):

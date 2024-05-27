@@ -220,7 +220,7 @@ class GUI_manager:
                 column = column.split(':')[1] if ':' in column else column
                 # Save in a pickle
                 with open(f'./Tables/{table}.hfile', 'wb') as file:
-                    table = pickle.load(file)
+                    pickle.dump(self.tableManager.tables[table], file)
                 # Call the put method on the tableManager with the validated parameters and display the result.
                 self.messageLabel(self.tableManager.put(table, row, column_family, column, value))
 

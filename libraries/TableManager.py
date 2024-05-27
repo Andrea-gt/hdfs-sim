@@ -286,7 +286,7 @@ class TableManager:
                             if column == column_name:
 
                                 # Get the rows associated with the current column
-                                cell_values = family.columns[column].rows[row].values
+                                cell_values = family.columns[column].searchRow(row).values
 
                                 # Iterate through each value in the cell
                                 for i, value in enumerate(cell_values):
@@ -294,12 +294,12 @@ class TableManager:
                                     if value.creationDate == timestamp:
 
                                         # Remove the value from the list of values
-                                        family.columns[column].rows[row].values.pop(i)
+                                        family.columns[column].searchRow(row).values.pop(i)
                                         found = True  # Set the flag to True as the value is found
 
                                 # If the row is empty after removing the value, delete the row
-                                if family.columns[column].rows[row].isEmpty():
-                                    del family.columns[column].rows[row]
+                                if family.columns[column].searchRow(row).isEmpty():
+                                    family.columns[column].rows.remove(row)
 
             except KeyError:
                 # Handle the case where the specified row key is not found
@@ -337,8 +337,9 @@ class TableManager:
             for family in data.columnFamilies:
                 # Iterate through each column in the column family
                 for column in family.columns.keys():
-                    if row in family.columns[column].rows.keys():
-                        del family.columns[column].rows[row]
+                    result = family.columns[column].searchRow(row)
+                    if result:
+                        family.columns[column].rows.remove(result)
                         found = True
 
             # Check if the value was not found during the iteration
