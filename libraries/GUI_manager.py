@@ -194,6 +194,19 @@ class GUI_manager:
                     # Call the delete method on the tableManager with the validated parameters and display the result.
                     self.messageLabel(self.tableManager.deleteAll(table, row))
 
+        elif operation == 'put':
+            # Validate that the required variables 'table', 'row', 'column', and 'value' are present in the input.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row', 'column', 'value'])
+            if validation:
+                # Unpack the returnStatement list into individual variables.
+                table, row, column, value = returnStatement
+                # Extract the column family from the column variable.
+                column_family = column.split(':')[0] if ':' in column else ''
+                column = column.split(':')[1] if ':' in column else column
+                # Call the put method on the tableManager with the validated parameters and display the result.
+                self.messageLabel(self.tableManager.put(table, row, column_family, column, value))
+                
+
 
 
     def mainloop(self):

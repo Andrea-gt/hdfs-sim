@@ -19,6 +19,14 @@ class Column:
     def obtainColumnInfo(self):
         data = {rowKey: self.rows[rowKey].getActualValue() for rowKey in self.rows}
         return data
+    
+    def insertOrUpdateRow(self, rowKey, value):
+        if rowKey in self.rows:
+            self.rows[rowKey].update(value)
+        else:
+            self.insertRow(rowKey, value)
+        return True
+
 
 class ColumnFamily:
     def __init__(self, name: str, columns:List[str]=[]):
@@ -57,6 +65,27 @@ class ColumnFamily:
             data+=metadataColumn
 
         return data
+    
+    def insertOrUpdateRow(self, rowKey, column, value:str):
+        saveValue = None
+        if value.isdigit():
+            saveValue = int(value)
+        elif value.replace('.','',1).isdigit():
+            saveValue = float(value)
+        elif value.lower() == 'true' or value.lower() == 'false':
+            saveValue = bool(value)
+        else:
+            saveValue = value
+
+        if column in self.columns:
+            self.columns[column].insertOrUpdateRow(rowKey, saveValue)
+        else:
+            self.insertColumn(column)
+            self.columns[column].insertOrUpdateRow(rowKey, saveValue)
+
+        
+
+        
 
 class Value:
     def __init__(self, value):
@@ -81,9 +110,13 @@ class Cell:
 
 class Table:
     def __init__(self, columns:Dict[str, List[str]]):
-        self.columnFamilies = []
+        print(columns, 'columns')
+        self.columnFamilies:List['ColumnFamily'] = [ColumnFamily('')]
         for cf in columns:
-            self.columnFamilies.append(ColumnFamily(cf.strip(), [c for c in columns[cf]]))
+            if cf != '':
+                self.columnFamilies.append(ColumnFamily(cf.strip(), [c for c in columns[cf]]))
+            else:
+                self.columnFamilies[0] = ColumnFamily(cf.strip(), [c for c in columns[cf]])
         self.rowKeyCounter = 0
         self.isEnable = True
 
@@ -124,6 +157,16 @@ class Table:
         data = data.drop_duplicates()
         print(tabulate.tabulate(data, headers='keys', tablefmt='grid'))
         return data
+    
+    def insertOrUpdateRow(self, rowKey, columnFamily, column, value):
+        for cf in self.columnFamilies:
+            print(cf.name)
+            if cf.name.strip() == columnFamily.strip():
+                cf.insertOrUpdateRow(rowKey, column, value)
+                print('Row updated')
+                return True
+        print('Row not found')    
+        return False
 
 
 

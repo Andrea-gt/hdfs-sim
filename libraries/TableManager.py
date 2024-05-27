@@ -292,3 +292,22 @@ class TableManager:
         
     def deleteAll(self, table: str, row: str):
         pass
+
+    def put(self, table:str, rowKey:str, column_family:str, column:str, value:str ):
+        initialTime = time.perf_counter()
+        if table in self.tables:
+            if self.tables[table].insertOrUpdateRow(rowKey, column_family, column, value):
+                finalTime = time.perf_counter()
+                total = finalTime - initialTime
+                if total < 1:
+                    return f"Row '{rowKey}' inserted in table '{table}'. Time: {total * 1000:.4f} ms"
+                else:
+                    return f"Row '{rowKey}' inserted in table '{table}'. Time: {total:.4f} s"
+            else:
+                return f"Error: Column Family not found '{column_family}'"
+        else:
+            total = time.perf_counter() - initialTime
+            if total < 1:
+                return f"Error: Table '{table}' not found. Time: {total * 1000:.4f} ms"
+            else:
+                return f"Error: Table '{table}' not found. Time: {total:.4f} s"
