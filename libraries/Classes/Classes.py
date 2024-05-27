@@ -26,6 +26,16 @@ class Column:
         else:
             self.insertRow(rowKey, value)
         return True
+    
+    def maxNumberOfVersions(self):
+        if len(self.rows) == 0:
+            return 0
+        return max([self.rows[rowKey].tiemsStamp() for rowKey in self.rows])
+    
+    def minNumberOfVersions(self):
+        if len(self.rows) == 0:
+            return 0
+        return min([self.rows[rowKey].tiemsStamp() for rowKey in self.rows])
 
 
 class ColumnFamily:
@@ -83,9 +93,16 @@ class ColumnFamily:
             self.insertColumn(column)
             self.columns[column].insertOrUpdateRow(rowKey, saveValue)
 
+    def maxNumberOfVersions(self):
+        if len(self.columns) == 0:
+            return 0
         
-
-        
+        return max([column.maxNumberOfVersions() for column in self.columns.values()])
+    
+    def minNumberOfVersions(self):
+        if len(self.columns) == 0:
+            return 0
+        return min([column.minNumberOfVersions() for column in self.columns.values()])
 
 class Value:
     def __init__(self, value):
@@ -110,6 +127,9 @@ class Cell:
 
     def isEmpty(self):
         return len(self.values) == 0
+    
+    def tiemsStamp(self):
+        return len(self.values)
 
 class Table:
     def __init__(self, columns:Dict[str, List[str]]):
@@ -175,6 +195,22 @@ class Table:
     def addColumnFamily(self, columnFamilyName, columns:List[str]=[]):
         self.columnFamilies.append(ColumnFamily(columnFamilyName, columns))
 
+    def describeTable(self):
+        data = {}
+        rowKeys = set()
+        for cf in self.obtainTableInfo().index:
+            rowKeys.add(cf)
+        data['Row keys'] = len(rowKeys)
+        data['Column Families'] = str([cf.name  for cf in self.columnFamilies if cf.name!=''])
+        data['isEnable'] = self.isEnable
+        data['Max number of versions'] = max([cf.maxNumberOfVersions() for cf in self.columnFamilies])
+        data['Min number of versions'] = min([cf.minNumberOfVersions() for cf in self.columnFamilies])
+
+        return data
+
+
+    
+        
 
 
 

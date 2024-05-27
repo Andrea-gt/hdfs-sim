@@ -425,9 +425,13 @@ class TableManager:
         if table in self.tables:
             # Call the insertOrUpdateRow method on the specified table.
             if self.tables[table].insertOrUpdateRow(rowKey, column_family, column, value):
+
+                # Save the updated data back to the file.
+                with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as outf:
+                    pickle.dump(self.tables[table], outf)
                 # Calculate the total time taken for the operation.
                 time_taken = time.perf_counter() - initTime
-                # Format and return the message indicating the total time taken.
+                # Return the time taken in milliseconds.
                 return self.outputFormatter(time_taken, 0)
             else:
                 # Return an error message if the specified column family is not found.
@@ -455,8 +459,13 @@ class TableManager:
                             if column.name == args['name']:
                                 self.tables[table].columnFamilies.remove(column)
                                 break
-                    else:
-                        self.tables[table].addColumnFamily(args['name'])
+                else:
+                    self.tables[table].addColumnFamily(args['name'])
+
+
+            # Save the updated data back to the file
+            with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as outf:
+                pickle.dump(self.tables[table], outf)
 
             finalTime = time.perf_counter()
             total = finalTime - initialTime
@@ -464,6 +473,7 @@ class TableManager:
                 return f"Table '{table}' altered. Time: {total * 1000:.4f} ms"
             else:
                 return f"Table '{table}' altered. Time: {total:.4f} s"
+            
 
         else:
             total = time.perf_counter() - initialTime
@@ -471,7 +481,16 @@ class TableManager:
                 return f"Error: Table '{table}' not found. Time: {total * 1000:.4f} ms"
             else:
                 return f"Error: Table '{table}' not found. Time: {total:.4f} s"
-
-     
             
+
+    def describe(self, table:str):
+        if table in self.tables:
+            data = self.tables[table].describeTable()
+            data['Name'] = table
+            return pd.DataFrame(data, index=[0])
+        else:
+            return pd.DataFrame({"Error": ["Table not found"]})
+
+
+          
         

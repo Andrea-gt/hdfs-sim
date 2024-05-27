@@ -1,3 +1,4 @@
+import pickle
 import customtkinter
 from .components import InputCommand, Table
 import pandas as pd
@@ -210,6 +211,9 @@ class GUI_manager:
                 # Extract the column family from the column variable.
                 column_family = column.split(':')[0] if ':' in column else ''
                 column = column.split(':')[1] if ':' in column else column
+                # Save in a pickle
+                with open(f'./Tables/{table}.hfile', 'wb') as file:
+                    table = pickle.load(file)
                 # Call the put method on the tableManager with the validated parameters and display the result.
                 self.messageLabel(self.tableManager.put(table, row, column_family, column, value))
 
@@ -218,7 +222,7 @@ class GUI_manager:
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
             if validation:
                 # Unpack the returnStatement list into individual variables.
-                table = returnStatement
+                table = returnStatement[0]
                 # Call the alter method on the tableManager with the validated parameters and display the result.
                 self.messageLabel(self.tableManager.alter(table, variables))
                 
@@ -230,6 +234,18 @@ class GUI_manager:
                 table: str = returnStatement[0]
                 # Call the truncate method on the tableManager with the validated parameters and display the result.
                 self.messageLabel(self.tableManager.truncate(table))
+
+        elif operation == 'describe':
+            # Validate that the required variable 'table' is present in the input.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            if validation:
+                # Unpack the returnStatement list into individual variables.
+                initial_time = time.perf_counter()
+                table: str = returnStatement[0]
+                result = self.tableManager.describe(table)
+
+                # Call the describe method on the tableManager with the validated parameters and display the result.
+                self.change_table(result, time.perf_counter() - initial_time)
 
     def mainloop(self):
         self.app.mainloop()
