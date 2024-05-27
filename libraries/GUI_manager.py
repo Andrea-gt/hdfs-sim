@@ -222,8 +222,14 @@ class GUI_manager:
                 # Call the alter method on the tableManager with the validated parameters and display the result.
                 self.messageLabel(self.tableManager.alter(table, variables))
                 
-
-
+        elif operation == 'truncate':
+            # Validate that the required variable 'table' is present in the input.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            if validation:
+                # Unpack the returnStatement list into individual variables.
+                table: str = returnStatement[0]
+                # Call the truncate method on the tableManager with the validated parameters and display the result.
+                self.messageLabel(self.tableManager.truncate(table))
 
     def mainloop(self):
         self.app.mainloop()

@@ -96,10 +96,10 @@ class TableManager:
         else:
             return f"Table '{table}' not found."
         
-    def createTable(self, name, columsFamilys:List[str]):
+    def createTable(self, name, columnFamilies:List[str]):
         initTime = time.perf_counter()
         try:
-            newTable = Table({cf: [] for cf in columsFamilys})
+            newTable = Table({cf: [] for cf in columnFamilies})
             self.tables[name] = newTable
 
             with open(f"{self.tableDirectory}/{name}.hfile", 'wb') as file:
@@ -210,7 +210,6 @@ class TableManager:
             # Return an error message if the table does not exist.
             return f"Error: The table '{table}' could not be found."
         
-    
     def dropAll(self, regex: str):
         """
         Drops all tables matching the given regular expression pattern.
@@ -332,9 +331,7 @@ class TableManager:
         if table in self.tables:
             # Retrieve the data for the specified table.
             data = self.tables[table]
-            
             found = False  # Initialize a flag to indicate if the value is found
-
             # Iterate through each column family in the data
             for family in data.columnFamilies:
                 # Iterate through each column in the column family
@@ -360,21 +357,83 @@ class TableManager:
         else:
             # Return an error message if the table does not exist.
             return f"Error: The table '{table}' could not be found."
+        
+    def truncate(self, table: str):
+        """
+        Truncates the specified table by disabling, dropping, and recreating it.
+
+        Args:
+            table (str): The name of the table to truncate.
+
+        Returns:
+            str: A message indicating the result of the truncation operation along with the time taken.
+        """
+        # Record the start time for performance measurement.
+        initTime = time.perf_counter()
+
+        # Initial message indicating the start of the truncation process.
+        init_str = 'Truncating \'one\' table (it may take a while):'
+
+        # Check if the specified table exists in the database.
+        if table in self.tables:
+            # Retrieve the data for the specified table.
+            data = self.tables[table]
+            
+            # Extract and join all column family names into a single string.
+            family_names_str = ', '.join([name for family in data.columnFamilies for name in family.name])
+
+            # Messages indicating the steps of the truncation process.
+            disable_str = '-Disabling table...'
+            truncate_str = '-Truncating table...'
+
+            # Disable, drop, and recreate the table.
+            self.disable(table=table)
+            self.drop(table=table)
+            self.createTable(name=table, columnFamilies=family_names_str)
+
+            # Join all the messages together.
+            messages = [init_str, disable_str, truncate_str]
+
+            # Calculate the total time taken for the operation.
+            time_taken = time.perf_counter() - initTime
+
+            # Return the joined messages along with the time taken.
+            return '\n'.join(messages) + '\n' + self.outputFormatter(time_taken, 0)
+
+        else:
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
 
     def put(self, table:str, rowKey:str, column_family:str, column:str, value:str ):
-        initialTime = time.perf_counter()
+        """
+        Inserts or updates a value in the specified table.
+
+        Args:
+            table (str): The name of the table.
+            rowKey (str): The row key where the value will be inserted or updated.
+            column_family (str): The column family where the value will be inserted or updated.
+            column (str): The column where the value will be inserted or updated.
+            value (str): The value to be inserted or updated.
+
+        Returns:
+            str: A message indicating the result of the operation along with the time taken.
+        """
+        # Record the start time for performance measurement.
+        initTime = time.perf_counter()
+        
+        # Check if the specified table exists in the database.
         if table in self.tables:
+            # Call the insertOrUpdateRow method on the specified table.
             if self.tables[table].insertOrUpdateRow(rowKey, column_family, column, value):
-                finalTime = time.perf_counter()
-                total = finalTime - initialTime
-                if total < 1:
-                    return f"Row '{rowKey}' inserted in table '{table}'. Time: {total * 1000:.4f} ms"
-                else:
-                    return f"Row '{rowKey}' inserted in table '{table}'. Time: {total:.4f} s"
+                # Calculate the total time taken for the operation.
+                time_taken = time.perf_counter() - initTime
+                # Format and return the message indicating the total time taken.
+                return self.outputFormatter(time_taken, 0)
             else:
-                return f"Error: Column Family not found '{column_family}'"
+                # Return an error message if the specified column family is not found.
+                return f"Error: Column family '{column_family}' could not be found."
         else:
-            total = time.perf_counter() - initialTime
+            total = time.perf_counter() - initTime
             if total < 1:
                 return f"Error: Table '{table}' not found. Time: {total * 1000:.4f} ms"
             else:
