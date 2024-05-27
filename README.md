@@ -52,3 +52,8 @@ HBase GUI Manager is a graphical user interface (GUI) application for simulate t
 ## Enjoy! 🚀🎉
 
 We hope you find HBase GUI Manager helpful and easy to use! If you encounter any issues, have suggestions for improvements, or want to contribute new features, feel free to contact us.
+
+## Contributors
+- [@Andrea-gt](https://github.com/Andrea-gt)
+- [@adrianRFlores](https://github.com/adrianRFlores)
+- [@Danval-003](https://github.com/Danval-003)
