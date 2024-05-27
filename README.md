@@ -1,5 +1,5 @@
 # HBase GUI Manager 🗃️
-HBase GUI Manager is a graphical user interface (GUI) application for simulate the managment of HBase tables with ease. This application provides a user-friendly interface to interact with HBase tables, perform various operations, and visualize the data in a tabular format.
+HBase GUI Manager is a graphical user interface (GUI) application to simulate the management of HBase tables with ease. This application provides a user-friendly interface to interact with HBase tables, perform various operations, and visualize the data in a tabular format.
 
 ## Features
 
