@@ -99,7 +99,7 @@ class TableManager:
     def createTable(self, name, columnFamilies:List[str]):
         initTime = time.perf_counter()
         try:
-            newTable = Table({cf: [] for cf in columnFamilies})
+            newTable = Table(columns={cf: [] for cf in columnFamilies}, indexed=False)
             self.tables[name] = newTable
 
             with open(f"{self.tableDirectory}/{name}.hfile", 'wb') as file:
@@ -115,19 +115,20 @@ class TableManager:
         except Exception as e:
             return f"Error: {e}"
         
-    def get(self, table:str, rowKey:str, column:str=''):
+    def get(self, table:str, rowKey:str, column_family=None, column=None):
+
         if rowKey.strip() == '':
             return pd.DataFrame({"Error": ["RowKey is empty"]})
         
+        
         if table in self.tables:
-            data = self.tables[table].obtainTableInfoWithMetadata()
-            print(data.columns, rowKey, type(rowKey))
-            if len(column)>0:
-                data = data[(data['Row Key']== rowKey) & (data['CF:Column'] == column)]
-            else:
-                data = data[(data['Row Key']== rowKey)]
+            data = self.tables[table].obtainTableInfoRowkeyWithMetadata(rowKey, column_family, column)
+            if len(data) == 0:
+                return pd.DataFrame({"Error": ["Row not found"]})
             
-            return data
+            if len(data) == 1:
+                return pd.DataFrame(data, index=[0])
+            return pd.DataFrame(data)
         else:
             return pd.DataFrame({"Error": ["Table not found"]})
         
@@ -462,6 +463,9 @@ class TableManager:
                 else:
                     self.tables[table].addColumnFamily(args['name'])
 
+            elif 'index' in args:
+                self.tables[table].setIndexed()
+
 
             # Save the updated data back to the file
             with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as outf:
@@ -490,7 +494,17 @@ class TableManager:
             return pd.DataFrame(data, index=[0])
         else:
             return pd.DataFrame({"Error": ["Table not found"]})
+        
+    
+    def insertMany(self, file):
+        for table, rows in file.items():
+            if table in self.tables:
+                self.tables[table].insertMany(rows)
+                with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as outf:
+                    pickle.dump(self.tables[table], outf)
 
+
+        return "Data inserted successfully"
 
           
         

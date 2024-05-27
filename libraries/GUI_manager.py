@@ -6,6 +6,8 @@ from .Classes import Table as TableClass, parse_command
 from .TableManager import TableManager
 from typing import List, Dict, Any
 import time
+import os
+import json
 
 class GUI_manager:
     def __init__(self, tableDirectory:str):
@@ -41,6 +43,8 @@ class GUI_manager:
         else:
             self.timeLabel = customtkinter.CTkLabel(self.miniFrame, text=f"Time: {time:.4f} s | Rows: {len(data)}")
         self.timeLabel.pack(side=customtkinter.LEFT, padx=10)
+        # limit data not more than 50 rows
+        data = data[:50]
         self.table = Table(self.app, data)
         self.table.create_table()
 
@@ -127,6 +131,7 @@ class GUI_manager:
             if 'columns' not in variables:
                 self.messageLabel("Columns not found in command. Please, insert columns.")
                 return
+            print(variables['columns'])
             columns:List[str] = variables['columns'] if isinstance(variables['columns'], list) else [variables['columns']]
             self.messageLabel(self.tableManager.createTable(table, columns))
 
@@ -141,8 +146,10 @@ class GUI_manager:
             rowkey:str = variables['rowkey'] if isinstance(variables['rowkey'], str) else ''
             if 'column' in variables:
                 column:str = variables['column'] if isinstance(variables['column'], str) else ''
+                column_family = column.split(':')[0] if ':' in column else None
+                column = column.split(':')[1] if ':' in column else column
                 initial_time = time.perf_counter()
-                result = self.tableManager.get(table, rowkey, column)
+                result = self.tableManager.get(table, rowkey, column_family, column)
                 total_time = time.perf_counter() - initial_time
                 self.change_table(result, total_time)
                 return
@@ -246,6 +253,28 @@ class GUI_manager:
 
                 # Call the describe method on the tableManager with the validated parameters and display the result.
                 self.change_table(result, time.perf_counter() - initial_time)
+
+        elif operation == 'insertMany':
+            # Validate that the required variable 'table' is present in the input.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['file'])
+            if validation:
+                # Unpack the returnStatement list into individual variables.
+                file: str = returnStatement[0]
+                try:
+                    # read the file json 
+                    with open(file, 'rb') as file:
+                        data = json.load(file)
+
+                    self.messageLabel(self.tableManager.insertMany(data))
+                except Exception as e:
+                    self.messageLabel(f"Error: {e}")
+
+                
+                
+                
+                
+
+        
 
     def mainloop(self):
         self.app.mainloop()
