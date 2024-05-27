@@ -170,6 +170,10 @@ class Table:
                 return True
         print('Row not found')    
         return False
+    
+
+    def addColumnFamily(self, columnFamilyName, columns:List[str]=[]):
+        self.columnFamilies.append(ColumnFamily(columnFamilyName, columns))
 
 
 

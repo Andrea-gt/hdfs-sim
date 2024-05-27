@@ -138,6 +138,13 @@ class GUI_manager:
                 self.messageLabel("Rowkey not found in command. Please, insert a rowkey.")
                 return
             rowkey:str = variables['rowkey'] if isinstance(variables['rowkey'], str) else ''
+            if 'column' in variables:
+                column:str = variables['column'] if isinstance(variables['column'], str) else ''
+                initial_time = time.perf_counter()
+                result = self.tableManager.get(table, rowkey, column)
+                total_time = time.perf_counter() - initial_time
+                self.change_table(result, total_time)
+                return
             initial_time = time.perf_counter()
             result = self.tableManager.get(table, rowkey)
             total_time = time.perf_counter() - initial_time
@@ -205,6 +212,15 @@ class GUI_manager:
                 column = column.split(':')[1] if ':' in column else column
                 # Call the put method on the tableManager with the validated parameters and display the result.
                 self.messageLabel(self.tableManager.put(table, row, column_family, column, value))
+
+        elif operation == 'alter':
+            # Validate that the required variables 'table', 'column_family', and 'columns' are present in the input.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            if validation:
+                # Unpack the returnStatement list into individual variables.
+                table = returnStatement
+                # Call the alter method on the tableManager with the validated parameters and display the result.
+                self.messageLabel(self.tableManager.alter(table, variables))
                 
 
 

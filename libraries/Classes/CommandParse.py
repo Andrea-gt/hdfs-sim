@@ -21,6 +21,17 @@ def parse_command(command):
                     value = value[1:-1]
                     # Separar por comas, sin necesidad de comillas
                     value = value.split(',')
+
+                elif value.startswith('{') and value.endswith('}'):
+                    # Remover los corchetes exteriores
+                    value = value[1:-1]
+                    # Separar por comas, sin necesidad de comillas
+                    value = value.split(',')
+                    # Separar por dos puntos
+                    value = [x.split(':') for x in value]
+                    # Convertir a diccionario
+                    value = {x[0]: x[1] for x in value}
+
                 variables[key] = value
             else:
                 variables[key_value[0]] = None

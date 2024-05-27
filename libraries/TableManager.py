@@ -12,7 +12,7 @@ import pandas as pd  # Provides data structures and data analysis tools (if need
 from .Classes import Table  # Imports the Table class from the local Classes module
 
 # Typing imports for type hinting
-from typing import Dict, List  # Provides support for type hints, Dict and List in this case
+from typing import Dict, List, Union  # Provides support for type hints, Dict and List in this case
 
 
 class TableManager:
@@ -115,14 +115,18 @@ class TableManager:
         except Exception as e:
             return f"Error: {e}"
         
-    def get(self, table:str, rowKey:str):
+    def get(self, table:str, rowKey:str, column:str=''):
         if rowKey.strip() == '':
             return pd.DataFrame({"Error": ["RowKey is empty"]})
         
         if table in self.tables:
             data = self.tables[table].obtainTableInfoWithMetadata()
             print(data.columns, rowKey, type(rowKey))
-            data = data[data['Row Key']== rowKey ]
+            if len(column)>0:
+                data = data[(data['Row Key']== rowKey) & (data['CF:Column'] == column)]
+            else:
+                data = data[(data['Row Key']== rowKey)]
+            
             return data
         else:
             return pd.DataFrame({"Error": ["Table not found"]})
@@ -375,3 +379,40 @@ class TableManager:
                 return f"Error: Table '{table}' not found. Time: {total * 1000:.4f} ms"
             else:
                 return f"Error: Table '{table}' not found. Time: {total:.4f} s"
+            
+    def alter(self, table:str, args:Dict[str, Union[str, List[str]]]):
+        initialTime = time.perf_counter()
+        if table in self.tables:
+            if 'delete' in args:
+                for column in self.tables[table].columnFamilies:
+                    if column.name == args['delete']:
+                        self.tables[table].columnFamilies.remove(column)
+                        break
+            elif 'name' in args:
+                if 'method' in args:
+                    method = args['method']
+                    if method == 'delete':
+                        for column in self.tables[table].columnFamilies:
+                            if column.name == args['name']:
+                                self.tables[table].columnFamilies.remove(column)
+                                break
+                    else:
+                        self.tables[table].addColumnFamily(args['name'])
+
+            finalTime = time.perf_counter()
+            total = finalTime - initialTime
+            if total < 1:
+                return f"Table '{table}' altered. Time: {total * 1000:.4f} ms"
+            else:
+                return f"Table '{table}' altered. Time: {total:.4f} s"
+
+        else:
+            total = time.perf_counter() - initialTime
+            if total < 1:
+                return f"Error: Table '{table}' not found. Time: {total * 1000:.4f} ms"
+            else:
+                return f"Error: Table '{table}' not found. Time: {total:.4f} s"
+
+     
+            
+        
