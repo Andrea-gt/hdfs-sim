@@ -28,8 +28,6 @@ class TableManager:
         else:
             os.mkdir(tableDirectory)
             raise Exception(f"Table directory {tableDirectory} does not exist. Created a new directory.")
-        
-        print(f"Tables: {self.tables}")
 
     def outputFormatter(self, time, rows):
         """

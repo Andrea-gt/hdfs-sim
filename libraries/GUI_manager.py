@@ -22,9 +22,6 @@ class GUI_manager:
         self.inputCommand = InputCommand(self.app, self.obtainOperation)
         self.tableManager = TableManager(tableDirectory)
         
-    def on_dropdown_select(self, value):
-        print(value)
-
     def change_table(self, data,  time:float=0.0):
         if hasattr(self, 'table'):
             self.table.destroy_table()
@@ -84,7 +81,6 @@ class GUI_manager:
         return True, returnStatement
 
     def obtainOperation(self, command):
-        print(f"Command: {command}")
         operation, variables = parse_command(command)
 
         if operation == 'list':
@@ -124,39 +120,44 @@ class GUI_manager:
             self.messageLabel(self.tableManager.isEnable(table))
 
         elif operation == 'create':
-            if 'table' not in variables:
-                self.messageLabel("Table not found in command. Please, insert a table name.")
-                return
-            table:str = variables['table'] if isinstance(variables['table'], str) else ''
-            if 'columns' not in variables:
-                self.messageLabel("Columns not found in command. Please, insert columns.")
-                return
-            print(variables['columns'])
-            columns:List[str] = variables['columns'] if isinstance(variables['columns'], list) else [variables['columns']]
-            self.messageLabel(self.tableManager.createTable(table, columns))
+            # Perform validation for the 'create' operation
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'column_families'])
+            
+            # Extract table name and column families from the return statement
+            # returnStatement should be a tuple with the table name and a list of column families
+            table, column_families = returnStatement
+            
+            # Ensure column_families is typed as a List[str]
+            column_families: List[str] = column_families
+            
+            # Call the createTable method of tableManager to create the table with provided column families
+            # Return the result of the createTable method and display it using messageLabel
+            self.messageLabel(self.tableManager.createTable(table, column_families))
 
         elif operation == 'get':
-            if 'table' not in variables:
-                self.messageLabel("Table not found in command. Please, insert a table name.")
-                return
-            table:str = variables['table'] if isinstance(variables['table'], str) else ''
-            if 'rowkey' not in variables:
-                self.messageLabel("Rowkey not found in command. Please, insert a rowkey.")
-                return
-            rowkey:str = variables['rowkey'] if isinstance(variables['rowkey'], str) else ''
-            if 'column' in variables:
-                column:str = variables['column'] if isinstance(variables['column'], str) else ''
-                column_family = column.split(':')[0] if ':' in column else None
-                column = column.split(':')[1] if ':' in column else column
-                initial_time = time.perf_counter()
-                result = self.tableManager.get(table, rowkey, column_family, column)
-                total_time = time.perf_counter() - initial_time
-                self.change_table(result, total_time)
-                return
+            # Measure the initial time for performance tracking
             initial_time = time.perf_counter()
-            result = self.tableManager.get(table, rowkey)
-            total_time = time.perf_counter() - initial_time
-            self.change_table(result, total_time)
+            # Check if 'table' and 'row' are present in the variables dictionary.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row'])
+            if validation:
+                # Extract table name, row, and column name (if provided) from returnStatement
+                table, row, column_name = returnStatement
+                # If column name is provided, split it into column family and name
+                if column_name:
+                    column_family = column_name.split(':')[0] if ':' in column_name else None
+                    column_name = column_name.split(':')[1] if ':' in column_name else column_name
+                    # Retrieve data from the tableManager based on provided parameters
+                    result = self.tableManager.get(table, row, column_family, column_name)
+                    # Calculate time taken for the operation
+                    time_taken = time.perf_counter() - initial_time
+                    # Update the table with the retrieved data and time taken
+                    self.change_table(result, time_taken)
+            # If column name is not provided or validation fails, retrieve data based on table and row only
+            result = self.tableManager.get(table, row)
+            # Calculate time taken for the operation
+            time_taken = time.perf_counter() - initial_time
+            # Update the table with the retrieved data and time taken
+            self.change_table(result, time_taken)
 
         elif operation == 'count':
             # Check if 'table' is in the variables dictionary.
@@ -200,7 +201,7 @@ class GUI_manager:
                 # Call the delete method on the tableManager with the validated parameters and display the result.
                 self.messageLabel(self.tableManager.delete(table, row, column_name, timestamp_float))
 
-        elif operation == 'deleteall':
+        elif operation == 'delete_all':
             # Validate that the required variables 'table', 'row', 'column_name', and 'timestamp' are present in the input.
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row'])
             if validation:
@@ -254,27 +255,24 @@ class GUI_manager:
                 # Call the describe method on the tableManager with the validated parameters and display the result.
                 self.change_table(result, time.perf_counter() - initial_time)
 
-        elif operation == 'insertMany':
+        elif operation == 'insert_many':
             # Validate that the required variable 'table' is present in the input.
             validation, returnStatement = self.validation(variables=variables, expectedValues=['file'])
             if validation:
                 # Unpack the returnStatement list into individual variables.
                 file: str = returnStatement[0]
                 try:
-                    # read the file json 
+                    # Attempt to read the specified file as JSON
                     with open(file, 'rb') as file:
+                        # Load the JSON data from the file
                         data = json.load(file)
-
+                    # Insert the loaded data into the table managed by tableManager
                     self.messageLabel(self.tableManager.insertMany(data))
                 except Exception as e:
                     self.messageLabel(f"Error: {e}")
 
-                
-                
-                
-                
-
-        
+        else:
+            self.messageLabel(f"Error: The provided command '{operation}' is not recognized.")
 
     def mainloop(self):
         self.app.mainloop()
