@@ -2,6 +2,8 @@
 import os  # For interacting with the operating system
 import pickle  # For serializing and deserializing Python objects
 import time  # For time-related functions
+import json  # For serializing and deserializing JSON objects
+from typing import List, Dict, Any  # For type hinting and static type checking
 
 # Third-Party Imports
 import customtkinter  # For creating custom Tkinter GUI elements
@@ -78,12 +80,12 @@ class GUI_manager:
                 return False, ''
             
             # If the key is present, ensure the value is a string.
-            returnStatement.append(variables[key] if isinstance(variables[key], str) else '')
+            returnStatement.append(variables[key])
             variables.pop(key)
 
         for key in variables:
             # If the key is present, ensure the value is a string.
-            extras.append(variables[key] if isinstance(variables[key], str) else '')
+            extras.append(variables[key])
 
         return True, returnStatement + extras
 
@@ -206,7 +208,7 @@ class GUI_manager:
 
         elif operation == 'delete':
             # Validate that the required variables 'table', 'row', 'column_name', and 'timestamp' are present in the input.
-            validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row', 'column_name', 'timestamp'])
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row', 'column', 'timestamp'])
             if validation:
                 try:
                     # Extract and convert timestamp to float.

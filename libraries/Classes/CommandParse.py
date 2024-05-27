@@ -35,6 +35,5 @@ def parse_command(command):
                 variables[key] = value
             else:
                 variables[key_value[0]] = None
-
+    
     return operation, variables
-

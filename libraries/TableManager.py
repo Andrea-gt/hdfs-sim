@@ -140,14 +140,15 @@ class TableManager:
         """
         # Start a timer to measure the time taken for the operation.
         init_time = time.perf_counter()
-        
+        str_list = [str(self.tables[table].isEnable)]
         # Check if the specified table exists in the database.
         if table in self.tables:
             # Calculate the total time taken for the operation.
             time_taken = time.perf_counter() - init_time
             
             # Format and return the time taken.
-            return self.outputFormatter(time_taken, 0)
+            str_list.append(self.outputFormatter(time_taken, 0))
+            return "\n".join(str_list)
         else:
             # Return an error message if the table does not exist.
             return f"Error: The table '{table}' could not be found."
@@ -430,7 +431,7 @@ class TableManager:
                 for column in family.columns.keys():
                     result = family.columns[column].searchRow(row)
                     if result:
-                        family.columns[column].rows.remove(result)
+                        family.columns[column].rows.remove(row)
                         found = True
 
             # Check if the value was not found during the iteration
@@ -483,7 +484,7 @@ class TableManager:
             # Disable, drop, and recreate the table.
             self.disable(table=table)
             self.drop(table=table)
-            self.create(name=table, columnFamilies=family_names)
+            self.create(name=table, column_families=family_names)
 
             # Join all the messages together.
             messages = [init_str, disable_str, truncate_str, rebuild_str]
