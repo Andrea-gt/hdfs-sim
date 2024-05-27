@@ -1,13 +1,16 @@
-import pickle
-import customtkinter
-from .components import InputCommand, Table
-import pandas as pd
-from .Classes import Table as TableClass, parse_command
-from .TableManager import TableManager
-from typing import List, Dict, Any
-import time
-import os
-import json
+# Standard Library Imports
+import os  # For interacting with the operating system
+import pickle  # For serializing and deserializing Python objects
+import time  # For time-related functions
+
+# Third-Party Imports
+import customtkinter  # For creating custom Tkinter GUI elements
+import pandas as pd  # For data manipulation and analysis
+
+# Local Imports
+from .Classes import Table as TableClass, parse_command  # Importing specific classes and functions from the local Classes module
+from .TableManager import TableManager  # Importing the TableManager class from the local TableManager module
+from .components import InputCommand, Table  # Importing specific components from the local components module
 
 class GUI_manager:
     def __init__(self, tableDirectory:str):
@@ -30,15 +33,12 @@ class GUI_manager:
         if hasattr(self, 'message'):
             self.message.destroy()
             delattr(self, 'message')
-
         # Create a miniFrame with label and time
         self.miniFrame = customtkinter.CTkFrame(self.app, width=940, height=40)
         self.miniFrame.pack()
         # Create a label with time and number of rows Config total time to show the time in seconds or milliseconds and only use 4 decimal places
-        if time < 1:
-            self.timeLabel = customtkinter.CTkLabel(self.miniFrame, text=f"Time: {time * 1000:.4f} ms | Rows: {len(data)}")
-        else:
-            self.timeLabel = customtkinter.CTkLabel(self.miniFrame, text=f"Time: {time:.4f} s | Rows: {len(data)}")
+        time_str = f"{time * 1000:.4f} ms" if time < 1 else f"{time:.4f} s"
+        self.timeLabel = customtkinter.CTkLabel(self.miniFrame, text=f"{len(data)} row(s) in {time_str}")
         self.timeLabel.pack(side=customtkinter.LEFT, padx=10)
         # limit data not more than 50 rows
         data = data[:50]
@@ -143,9 +143,9 @@ class GUI_manager:
             table, column_families = returnStatement
             # Ensure column_families is typed as a List[str]
             column_families: List[str] = column_families
-            # Call the createTable method of tableManager to create the table with provided column families
-            # Return the result of the createTable method and display it using messageLabel
-            self.messageLabel(self.tableManager.createTable(table, column_families))
+            # Call the create method of tableManager to create the table with provided column families
+            # Return the result of the create method and display it using messageLabel
+            self.messageLabel(self.tableManager.create(table, column_families))
 
         elif operation == 'get':
             # Measure the initial time for performance tracking
@@ -294,4 +294,3 @@ class GUI_manager:
 
     def mainloop(self):
         self.app.mainloop()
-

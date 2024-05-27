@@ -14,7 +14,6 @@ from .Classes import Table  # Imports the Table class from the local Classes mod
 # Typing imports for type hinting
 from typing import Dict, List, Union  # Provides support for type hints, Dict and List in this case
 
-
 class TableManager:
     def __init__(self, tableDirectory:str) -> None:
         self.tableDirectory = tableDirectory
@@ -44,92 +43,186 @@ class TableManager:
         time_str = f"{time * 1000:.4f} ms" if time < 1 else f"{time:.4f} s"
         return f"{rows} row(s) in {time_str}"
 
-    def scan(self, table:str):
+    def scan(self, table: str):
+        """
+        Scan the specified table and retrieve its data along with metadata.
+
+        Parameters:
+            table (str): The name of the table to scan.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the table's data and metadata, 
+                        or an error message if the table does not exist.
+        """
+        # Check if the specified table exists in the database.
         if table in self.tables:
+            # Retrieve and return the table's data along with metadata.
             return self.tables[table].obtainTableInfoWithMetadata()
         else:
+            # Return an error message if the table does not exist.
             return pd.DataFrame({"Error": ["Table not found"]})
-    
+
     def list_(self):
+        """
+        List all tables in the database.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the names of all tables.
+        """
+        # Create and return a DataFrame with a single column 'Tables' containing the names of all tables.
         return pd.DataFrame({"Tables": list(self.tables.keys())})
-    
-    def disable(self, table:str):
-        initTime = time.perf_counter()
+
+    def disable(self, table: str):
+        """
+        Disable the specified table if it exists in the database and measure the time taken for the operation.
+
+        Parameters:
+            table (str): The name of the table to disable.
+
+        Returns:
+            str: A formatted string indicating the time taken to disable the table, or an error message if the table does not exist.
+        """
+        # Start a timer to measure the time taken for the operation.
+        init_time = time.perf_counter()
+
+        # Check if the specified table exists in the database.
         if table in self.tables:
+            # Disable the table by setting its isEnable attribute to False.
             self.tables[table].isEnable = False
-            endTime = time.perf_counter()
-            total = endTime - initTime
-            # Config total time to show the time in seconds or milliseconds and only use 4 decimal places
-            if total < 1:
-                return f"Table '{table}' disabled. Time: {total * 1000:.4f} ms"
-            else:
-                return f"Table '{table}' disabled. Time: {total:.4f} s"
-        else:
-            return f"Table '{table}' not found."
+
+            # Calculate the total time taken for the operation.
+            time_taken = time.perf_counter() - init_time
+
+            # Format and return the time taken.
+            return self.outputFormatter(time_taken, 0)
         
-    def enable(self, table:str):
-        initTime = time.perf_counter()
+        else:
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
+
+    def enable(self, table: str):
+        """
+        Enable the specified table if it exists in the database and measure the time taken for the operation.
+
+        Parameters:
+            table (str): The name of the table to enable.
+
+        Returns:
+            str: A formatted string indicating the time taken to enable the table, or an error message if the table does not exist.
+        """
+        # Start a timer to measure the time taken for the operation.
+        init_time = time.perf_counter()
+        
+        # Check if the specified table exists in the database.
         if table in self.tables:
+            # Enable the table by setting its isEnable attribute to True.
             self.tables[table].isEnable = True
-            endTime = time.perf_counter()
-            total = endTime - initTime
-            # Config total time to show the time in seconds or milliseconds and only use 4 decimal places
-            if total < 1:
-                return f"Table '{table}' enabled. Time: {total * 1000:.4f} ms"
-            else:
-                return f"Table '{table}' enabled. Time: {total:.4f} s"
+            
+            # Calculate the total time taken for the operation.
+            time_taken = time.perf_counter() - init_time
+            
+            # Format and return the time taken.
+            return self.outputFormatter(time_taken, 0)
         else:
-            return f"Table '{table}' not found."
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
         
-    def isEnabled(self, table:str):
-        initTime = time.perf_counter()
+    def isEnabled(self, table: str):
+        """
+        Check if the specified table exists in the database and measure the time taken for the operation.
+
+        Parameters:
+            table (str): The name of the table to check.
+
+        Returns:
+            str: A formatted string indicating the time taken for the operation if the table exists,
+                or an error message if the table does not exist.
+        """
+        # Start a timer to measure the time taken for the operation.
+        init_time = time.perf_counter()
+        
+        # Check if the specified table exists in the database.
         if table in self.tables:
-            endTime = time.perf_counter()
-            total = endTime - initTime
-            # Config total time to show the time in seconds or milliseconds and only use 4 decimal places
-            if total < 1:
-                return f"Table '{table}' is {'enabled' if self.tables[table].isEnable else 'disabled'}. Time: {total * 1000:.4f} ms"
-            else:
-                return f"Table '{table}' is {'enabled' if self.tables[table].isEnable else 'disabled'}. Time: {total:.4f} s"
+            # Calculate the total time taken for the operation.
+            time_taken = time.perf_counter() - init_time
+            
+            # Format and return the time taken.
+            return self.outputFormatter(time_taken, 0)
         else:
-            return f"Table '{table}' not found."
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
         
-    def createTable(self, name, columnFamilies:List[str]):
-        initTime = time.perf_counter()
+    def create(self, name: str, column_families: List[str]):
+        """
+        Create a new table with specified column families and save it to a file.
+
+        Parameters:
+            name (str): The name of the new table to be created.
+            column_families (List[str]): A list of column families to be included in the new table.
+
+        Returns:
+            str: A formatted string indicating the time taken to create the table or an error message.
+        """
+        # Start a timer to measure the time taken to create the table.
+        init_time = time.perf_counter()
+
         try:
-            newTable = Table(columns={cf: [] for cf in columnFamilies}, indexed=False)
+            # Create a new Table object with specified column families.
+            newTable = Table(columns={cf: [] for cf in column_families}, indexed=False)
+            
+            # Add the new table to the tables dictionary.
             self.tables[name] = newTable
 
+            # Save the new table to a file using pickle.
             with open(f"{self.tableDirectory}/{name}.hfile", 'wb') as file:
                 pickle.dump(newTable, file)
 
-            endTime = time.perf_counter()
-            total = endTime - initTime
-            # Config total time to show the time in seconds or milliseconds and only use 4 decimal places
-            if total < 1:
-                return f"Table '{name}' created. Time: {total * 1000:.4f} ms"
-            else:
-                return f"Table '{name}' created. Time: {total:.4f} s"
-        except Exception as e:
-            return f"Error: {e}"
-        
-    def get(self, table:str, rowKey:str, column_family=None, column=None):
+            # Calculate the total time taken for the operation.
+            time_taken = time.perf_counter() - init_time
 
-        if rowKey.strip() == '':
+            # Format and return the time taken.
+            return self.outputFormatter(time_taken, 0)
+
+        except Exception as e:
+            # Return an error message if an exception occurs.
+            return f"Error: {e}"
+
+    def get(self, table: str, row: str, column_family=None, column_name=None):
+        """
+        Retrieve data from a specified table in the database.
+
+        Parameters:
+            table (str): The name of the table from which to retrieve data.
+            row (str): The row key to search for in the table.
+            column_family (str, optional): The column family to filter the search (default is None).
+            column_name (str, optional): The column name to filter the search (default is None).
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the retrieved data or error messages.
+        """
+        # Check if the row key is empty and return an error DataFrame if it is.
+        if row.strip() == '':
             return pd.DataFrame({"Error": ["RowKey is empty"]})
-        
-        
+
+        # Check if the specified table exists in the database.
         if table in self.tables:
-            data = self.tables[table].obtainTableInfoRowkeyWithMetadata(rowKey, column_family, column)
+            # Retrieve data from the table based on the provided row key, column family, and column name.
+            data = self.tables[table].obtainTableInfoRowkeyWithMetadata(row, column_family, column_name)
+            
+            # If no data is found for the given row key, return an error DataFrame.
             if len(data) == 0:
                 return pd.DataFrame({"Error": ["Row not found"]})
-            
+
+            # If only one row of data is found, return it as a single-row DataFrame.
             if len(data) == 1:
                 return pd.DataFrame(data, index=[0])
+
+            # Return the retrieved data as a DataFrame.
             return pd.DataFrame(data)
         else:
+            # Return an error DataFrame if the specified table does not exist.
             return pd.DataFrame({"Error": ["Table not found"]})
-        
+
     def count(self, table: str):
         """
         Counts the number of unique rows in the specified table.
@@ -390,7 +483,7 @@ class TableManager:
             # Disable, drop, and recreate the table.
             self.disable(table=table)
             self.drop(table=table)
-            self.createTable(name=table, columnFamilies=family_names)
+            self.create(name=table, columnFamilies=family_names)
 
             # Join all the messages together.
             messages = [init_str, disable_str, truncate_str, rebuild_str]
@@ -420,32 +513,30 @@ class TableManager:
             str: A message indicating the result of the operation along with the time taken.
         """
         # Record the start time for performance measurement.
-        initTime = time.perf_counter()
+        init_time = time.perf_counter()
         
         # Check if the specified table exists in the database.
         if table in self.tables:
             # Call the insertOrUpdateRow method on the specified table.
             if self.tables[table].insertOrUpdateRow(rowKey, column_family, column, value):
-
                 # Save the updated data back to the file.
                 with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as outf:
                     pickle.dump(self.tables[table], outf)
                 # Calculate the total time taken for the operation.
-                time_taken = time.perf_counter() - initTime
+                time_taken = time.perf_counter() - init_time
                 # Return the time taken in milliseconds.
                 return self.outputFormatter(time_taken, 0)
             else:
                 # Return an error message if the specified column family is not found.
                 return f"Error: Column family '{column_family}' could not be found."
         else:
-            total = time.perf_counter() - initTime
-            if total < 1:
-                return f"Error: Table '{table}' not found. Time: {total * 1000:.4f} ms"
-            else:
-                return f"Error: Table '{table}' not found. Time: {total:.4f} s"
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
             
     def alter(self, table:str, args:Dict[str, Union[str, List[str]]]):
-        initialTime = time.perf_counter()
+        # Record the start time for performance measurement.
+        init_time = time.perf_counter()
+        # Check if the specified table exists in the database.
         if table in self.tables:
             if 'delete' in args:
                 for column in self.tables[table].columnFamilies:
@@ -466,27 +557,20 @@ class TableManager:
             elif 'index' in args:
                 self.tables[table].setIndexed()
 
-
             # Save the updated data back to the file
             with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as outf:
                 pickle.dump(self.tables[table], outf)
 
-            finalTime = time.perf_counter()
-            total = finalTime - initialTime
-            if total < 1:
-                return f"Table '{table}' altered. Time: {total * 1000:.4f} ms"
-            else:
-                return f"Table '{table}' altered. Time: {total:.4f} s"
-            
+            # Calculate the total time taken for the operation.
+            time_taken = time.perf_counter() - init_time
 
+            # Return the time taken in milliseconds.
+            return self.outputFormatter(time_taken, 0)
+            
         else:
-            total = time.perf_counter() - initialTime
-            if total < 1:
-                return f"Error: Table '{table}' not found. Time: {total * 1000:.4f} ms"
-            else:
-                return f"Error: Table '{table}' not found. Time: {total:.4f} s"
+            # Return an error message if the table does not exist.
+            return f"Error: The table '{table}' could not be found."
             
-
     def describe(self, table:str):
         if table in self.tables:
             data = self.tables[table].describeTable()
@@ -495,16 +579,33 @@ class TableManager:
         else:
             return pd.DataFrame({"Error": ["Table not found"]})
         
-    
     def insertMany(self, file):
+        """
+        Insert multiple rows into multiple tables from a given file and measure the time taken for the operation.
+
+        Parameters:
+            file: A file where keys are table names and values are rows to insert.
+
+        Returns:
+            str: A formatted string indicating the time taken to perform the insertion.
+        """
+        # Record the start time for performance measurement.
+        init_time = time.perf_counter()
+        
+        # Iterate over each table and its corresponding rows in the input file.
         for table, rows in file.items():
             if table in self.tables:
+                # Insert multiple rows into the specified table.
                 self.tables[table].insertMany(rows)
+                
+                # Save the updated table to a file using pickle.
                 with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as outf:
                     pickle.dump(self.tables[table], outf)
 
+        # Calculate the total time taken for the operation.
+        time_taken = time.perf_counter() - init_time
 
-        return "Data inserted successfully"
-
+        # Return the time taken in a formatted string.
+        return self.outputFormatter(time_taken, 0)
           
         
