@@ -401,16 +401,33 @@ class TableManager:
             return f"Error: The table '{table}' could not be found."
 
     def put(self, table:str, rowKey:str, column_family:str, column:str, value:str ):
+        """
+        Inserts or updates a value in the specified table.
+
+        Args:
+            table (str): The name of the table.
+            rowKey (str): The row key where the value will be inserted or updated.
+            column_family (str): The column family where the value will be inserted or updated.
+            column (str): The column where the value will be inserted or updated.
+            value (str): The value to be inserted or updated.
+
+        Returns:
+            str: A message indicating the result of the operation along with the time taken.
+        """
+        # Record the start time for performance measurement.
         initTime = time.perf_counter()
+        
         # Check if the specified table exists in the database.
         if table in self.tables:
+            # Call the insertOrUpdateRow method on the specified table.
             if self.tables[table].insertOrUpdateRow(rowKey, column_family, column, value):
                 # Calculate the total time taken for the operation.
                 time_taken = time.perf_counter() - initTime
-                 # Format and return the message indicating the total time taken.
+                # Format and return the message indicating the total time taken.
                 return self.outputFormatter(time_taken, 0)
             else:
-                return f"Error: Column Family not found '{column_family}'"
+                # Return an error message if the specified column family is not found.
+                return f"Error: Column family '{column_family}' could not be found."
         else:
-            # Return an error message if the table does not exist.
+            # Return an error message if the specified table does not exist.
             return f"Error: The table '{table}' could not be found."
