@@ -81,7 +81,7 @@ class TableManager:
         else:
             return f"Table '{table}' not found."
         
-    def isEnable(self, table:str):
+    def isEnabled(self, table:str):
         initTime = time.perf_counter()
         if table in self.tables:
             endTime = time.perf_counter()

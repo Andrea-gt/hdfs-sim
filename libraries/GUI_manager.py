@@ -84,52 +84,58 @@ class GUI_manager:
         operation, variables = parse_command(command)
 
         if operation == 'list':
-            initial_time = time.perf_counter()
+            init_time = time.perf_counter()
+            # Call the list method of tableManager
+            # Return the result of the list method and display it using change_table
             result = self.tableManager.list_()
-            total_time = time.perf_counter() - initial_time
-            self.change_table(result, total_time)
+            self.change_table(result, time.perf_counter() - init_time)
 
         elif operation == 'scan':
-            if 'table' not in variables:
-                self.messageLabel("Table not found in command. Please, insert a table name.")
-                return
-            table:str = variables['table'] if isinstance(variables['table'], str) else ''
-            initial_time = time.perf_counter()
+            init_time = time.perf_counter()
+            # Perform validation for the 'is_enabled' operation
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            # Extract table name from the return statement
+            table = returnStatement[0]
+            # Call the scan method of tableManager
+            # Return the result of the scan method and display it using change_table
             result = self.tableManager.scan(table)
-            self.change_table(result, time.perf_counter() - initial_time)
+            self.change_table(result, time.perf_counter() - init_time)
 
         elif operation == 'disable':
-            if 'table' not in variables:
-                self.messageLabel("Table not found in command. Please, insert a table name.")
-                return
-            table:str = variables['table'] if isinstance(variables['table'], str) else ''
+            # Perform validation for the 'is_enabled' operation
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            # Extract table name from the return statement
+            table = returnStatement[0]
+            # Call the disable method of tableManager
+            # Return the result of the disable method and display it using messageLabel
             self.messageLabel(self.tableManager.disable(table))
             
         elif operation == 'enable':
-            if 'table' not in variables:
-                self.messageLabel("Table not found in command. Please, insert a table name.")
-                return
-            table:str = variables['table'] if isinstance(variables['table'], str) else ''
+            # Perform validation for the 'is_enabled' operation
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            # Extract table name from the return statement
+            table = returnStatement[0]
+            # Call the enable method of tableManager
+            # Return the result of the enable method and display it using messageLabel
             self.messageLabel(self.tableManager.enable(table))
 
         elif operation == 'is_enabled':
-            if 'table' not in variables:
-                self.messageLabel("Table not found in command. Please, insert a table name.")
-                return
-            table:str = variables['table'] if isinstance(variables['table'], str) else ''
-            self.messageLabel(self.tableManager.isEnable(table))
+            # Perform validation for the 'is_enabled' operation
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            # Extract table name from the return statement
+            table = returnStatement[0]
+            # Call the is_enabled method of tableManager
+            # Return the result of the isEnabled method and display it using messageLabel
+            self.messageLabel(self.tableManager.isEnabled(table))
 
         elif operation == 'create':
             # Perform validation for the 'create' operation
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'column_families'])
-            
             # Extract table name and column families from the return statement
             # returnStatement should be a tuple with the table name and a list of column families
             table, column_families = returnStatement
-            
             # Ensure column_families is typed as a List[str]
             column_families: List[str] = column_families
-            
             # Call the createTable method of tableManager to create the table with provided column families
             # Return the result of the createTable method and display it using messageLabel
             self.messageLabel(self.tableManager.createTable(table, column_families))
