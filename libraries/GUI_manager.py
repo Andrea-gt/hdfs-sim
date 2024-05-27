@@ -143,7 +143,6 @@ class GUI_manager:
             table, column_families = returnStatement
             # Ensure column_families is typed as a List[str]
             column_families: List[str] = column_families
-            print(returnStatement, column_families)
             # Call the createTable method of tableManager to create the table with provided column families
             # Return the result of the createTable method and display it using messageLabel
             self.messageLabel(self.tableManager.createTable(table, column_families))
@@ -155,7 +154,6 @@ class GUI_manager:
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row'])
             if validation:
                 # Extract table name, row, and column name (if provided) from returnStatement
-                print(returnStatement)
                 table, row, column_name = "", "", ""
                 if len(returnStatement) > 2:
                     table, row, column_name = returnStatement
@@ -165,7 +163,6 @@ class GUI_manager:
                 if column_name:
                     column_family = column_name.split(':')[0] if ':' in column_name else None
                     column_name = column_name.split(':')[1] if ':' in column_name else column_name
-                    print(column_family, column_name)
                     # Retrieve data from the tableManager based on provided parameters
                     result = self.tableManager.get(table, row, column_family, column_name)
                     # Calculate time taken for the operation
