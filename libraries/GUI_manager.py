@@ -205,9 +205,15 @@ class GUI_manager:
                 column = column.split(':')[1] if ':' in column else column
                 # Call the put method on the tableManager with the validated parameters and display the result.
                 self.messageLabel(self.tableManager.put(table, row, column_family, column, value))
-                
 
-
+        elif operation == 'truncate':
+            # Validate that the required variable 'table' is present in the input.
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            if validation:
+                # Unpack the returnStatement list into individual variables.
+                table: str = returnStatement
+                # Call the truncate method on the tableManager with the validated parameters and display the result.
+                self.messageLabel(self.tableManager.put(table))
 
     def mainloop(self):
         self.app.mainloop()
