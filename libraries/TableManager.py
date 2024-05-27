@@ -96,10 +96,10 @@ class TableManager:
         else:
             return f"Table '{table}' not found."
         
-    def createTable(self, name, columsFamiles:List[str]):
+    def createTable(self, name, columnFamilies:List[str]):
         initTime = time.perf_counter()
         try:
-            newTable = Table({cf: [] for cf in columsFamiles})
+            newTable = Table({cf: [] for cf in columnFamilies})
             self.tables[name] = newTable
 
             with open(f"{self.tableDirectory}/{name}.hfile", 'wb') as file:
@@ -376,7 +376,7 @@ class TableManager:
             data = self.tables[table]
             
             # Extract and join all column family names into a single string.
-            family_names_str = ', '.join([name for family in data.columnFamilies for name in family.names])
+            family_names_str = ', '.join([name for family in data.columnFamilies for name in family.name])
 
             # Messages indicating the steps of the truncation process.
             disable_str = '-Disabling table...'
@@ -385,7 +385,7 @@ class TableManager:
             # Disable, drop, and recreate the table.
             self.disable(table=table)
             self.drop(table=table)
-            self.createTable(table=table, columsFamilies=family_names_str)
+            self.createTable(name=table, columnFamilies=family_names_str)
 
             # Join all the messages together.
             messages = [init_str, disable_str, truncate_str]

@@ -211,9 +211,9 @@ class GUI_manager:
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
             if validation:
                 # Unpack the returnStatement list into individual variables.
-                table: str = returnStatement
+                table: str = returnStatement[0]
                 # Call the truncate method on the tableManager with the validated parameters and display the result.
-                self.messageLabel(self.tableManager.put(table))
+                self.messageLabel(self.tableManager.truncate(table))
 
     def mainloop(self):
         self.app.mainloop()
