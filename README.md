@@ -27,7 +27,7 @@ HBase GUI Manager is a graphical user interface (GUI) application to simulate th
 1. Clone the repository to your local machine:
 
     ```bash
-    git clone https://github.com/yourusername/hbase-gui-manager.git
+    git clone https://github.com/Andrea-gt/hdfs-sim
     ```
 
 2. Install the required dependencies:
