@@ -68,6 +68,7 @@ class GUI_manager:
             tuple: A tuple containing a boolean indicating success or failure, and the value associated with the expected keys (or an empty string).
         """
         returnStatement = []
+        extras = []
         
         for key in expectedValues:
             # Check if the expected key is in the variables dictionary.
@@ -78,7 +79,13 @@ class GUI_manager:
             
             # If the key is present, ensure the value is a string.
             returnStatement.append(variables[key] if isinstance(variables[key], str) else '')
-        return True, returnStatement
+            variables.pop(key)
+
+        for key in variables:
+            # If the key is present, ensure the value is a string.
+            extras.append(variables[key] if isinstance(variables[key], str) else '')
+
+        return True, returnStatement + extras
 
     def obtainOperation(self, command):
         operation, variables = parse_command(command)
@@ -136,6 +143,7 @@ class GUI_manager:
             table, column_families = returnStatement
             # Ensure column_families is typed as a List[str]
             column_families: List[str] = column_families
+            print(returnStatement, column_families)
             # Call the createTable method of tableManager to create the table with provided column families
             # Return the result of the createTable method and display it using messageLabel
             self.messageLabel(self.tableManager.createTable(table, column_families))
@@ -147,23 +155,30 @@ class GUI_manager:
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row'])
             if validation:
                 # Extract table name, row, and column name (if provided) from returnStatement
-                table, row, column_name = returnStatement
+                print(returnStatement)
+                table, row, column_name = "", "", ""
+                if len(returnStatement) > 2:
+                    table, row, column_name = returnStatement
+                else:
+                    table, row = returnStatement
                 # If column name is provided, split it into column family and name
                 if column_name:
                     column_family = column_name.split(':')[0] if ':' in column_name else None
                     column_name = column_name.split(':')[1] if ':' in column_name else column_name
+                    print(column_family, column_name)
                     # Retrieve data from the tableManager based on provided parameters
                     result = self.tableManager.get(table, row, column_family, column_name)
                     # Calculate time taken for the operation
                     time_taken = time.perf_counter() - initial_time
                     # Update the table with the retrieved data and time taken
                     self.change_table(result, time_taken)
-            # If column name is not provided or validation fails, retrieve data based on table and row only
-            result = self.tableManager.get(table, row)
-            # Calculate time taken for the operation
-            time_taken = time.perf_counter() - initial_time
-            # Update the table with the retrieved data and time taken
-            self.change_table(result, time_taken)
+                else:
+                    # If column name is not provided or validation fails, retrieve data based on table and row only
+                    result = self.tableManager.get(table, row)
+                    # Calculate time taken for the operation
+                    time_taken = time.perf_counter() - initial_time
+                    # Update the table with the retrieved data and time taken
+                    self.change_table(result, time_taken)
 
         elif operation == 'count':
             # Check if 'table' is in the variables dictionary.

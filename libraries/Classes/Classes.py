@@ -265,7 +265,7 @@ class Cell:
     
     def __eq__(self, value: object) -> bool:
         if isinstance(value, str):
-            return self.getActualValue() == value
+            return self.rowKey == value
         if isinstance(value, Cell):
             return value.rowKey == self.rowKey
         

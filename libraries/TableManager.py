@@ -157,7 +157,7 @@ class TableManager:
                 # Iterate through each column in the column family.
                 for column in family.columns.keys():
                     # Get the rows associated with the current column.
-                    rows = family.columns[column].rows.keys()
+                    rows = [row.rowKey for row in family.columns[column].rows]
                     # Add the rows to the set of unique rows.
                     unique_rows.update(rows)
             
@@ -299,7 +299,7 @@ class TableManager:
                                 if family.columns[column].searchRow(row).isEmpty():
                                     family.columns[column].rows.remove(row)
 
-            except KeyError:
+            except (KeyError, AttributeError):
                 # Handle the case where the specified row key is not found
                 return f"Error: The specified row key was not found in the table."
 
@@ -380,19 +380,20 @@ class TableManager:
             data = self.tables[table]
             
             # Extract and join all column family names into a single string.
-            family_names_str = ', '.join([name for family in data.columnFamilies for name in family.name])
+            family_names = [family.name for family in data.columnFamilies]
 
             # Messages indicating the steps of the truncation process.
             disable_str = '-Disabling table...'
             truncate_str = '-Truncating table...'
+            rebuild_str = '-Rebuilding table...'
 
             # Disable, drop, and recreate the table.
             self.disable(table=table)
             self.drop(table=table)
-            self.createTable(name=table, columnFamilies=family_names_str)
+            self.createTable(name=table, columnFamilies=family_names)
 
             # Join all the messages together.
-            messages = [init_str, disable_str, truncate_str]
+            messages = [init_str, disable_str, truncate_str, rebuild_str]
 
             # Calculate the total time taken for the operation.
             time_taken = time.perf_counter() - initTime
