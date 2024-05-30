@@ -183,6 +183,9 @@ class TableManager:
         # Start a timer to measure the time taken to create the table.
         init_time = time.perf_counter()
 
+        if not column_families[0]:
+            return "Error: Invalid table format, no column families provided."
+
         try:
             # Create a new Table object with specified column families.
             newTable = Table(columns={cf: [] for cf in column_families}, indexed=False)
@@ -504,7 +507,7 @@ class TableManager:
                 return f"Error: The table '{table}' is disabled."
             
             # Extract and join all column family names into a single string.
-            family_names = [family.name for family in data.columnFamilies]
+            family_names = [family.name for family in data.columnFamilies if family.name != '']
 
             # Messages indicating the steps of the truncation process.
             disable_str = '-Disabling table...'
