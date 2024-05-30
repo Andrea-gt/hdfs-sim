@@ -611,6 +611,16 @@ class TableManager:
                                 return f"Error: Column family '{args['new_cf']}' already exists."
                         else:
                             return f"Error: Column family '{args['cf']}' could not be found."
+                    elif method == 'add':
+                        exist = False
+                        for column in self.tables[table].columnFamilies:
+                            if column.name == args['cf']:
+                                exist = True
+                                break
+                        if not exist:
+                            self.tables[table].addColumnFamily(args['cf'])
+                        else:
+                            return f"Error: Column family '{args['cf']}' already exists."
                 else:
                     self.tables[table].addColumnFamily(args['cf'])
 
