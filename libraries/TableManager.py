@@ -43,7 +43,7 @@ class TableManager:
         time_str = f"{time * 1000:.4f} ms" if time < 1 else f"{time:.4f} s"
         return f"{rows} row(s) in {time_str}"
 
-    def scan(self, table: str):
+    def scan(self, table: str, nversions:int = 1, version:float = None):
         """
         Scan the specified table and retrieve its data along with metadata.
 
@@ -57,7 +57,8 @@ class TableManager:
         # Check if the specified table exists in the database.
         if table in self.tables:
             # Retrieve and return the table's data along with metadata.
-            return self.tables[table].obtainTableInfoWithMetadata()
+            return self.tables[table].obtainTableInfoWithMetadata(versions=nversions, version=version)
+
         else:
             # Return an error message if the table does not exist.
             return pd.DataFrame({"Error": ["Table not found"]})
@@ -87,8 +88,16 @@ class TableManager:
 
         # Check if the specified table exists in the database.
         if table in self.tables:
+            # Verify if table is disable
+            if not self.tables[table].isEnable:
+                return f"Error: The table '{table}' is already disabled."
+
             # Disable the table by setting its isEnable attribute to False.
             self.tables[table].isEnable = False
+
+            # Save table
+            with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as file:
+                pickle.dump(self.tables[table], file)
 
             # Calculate the total time taken for the operation.
             time_taken = time.perf_counter() - init_time
@@ -115,8 +124,15 @@ class TableManager:
         
         # Check if the specified table exists in the database.
         if table in self.tables:
+            # Verify if table is enable
+            if self.tables[table].isEnable:
+                return f"Error: The table '{table}' is already enabled."
             # Enable the table by setting its isEnable attribute to True.
             self.tables[table].isEnable = True
+
+            #Save table
+            with open(f"{self.tableDirectory}/{table}.hfile", 'wb') as file:
+                pickle.dump(self.tables[table], file)
             
             # Calculate the total time taken for the operation.
             time_taken = time.perf_counter() - init_time
@@ -188,7 +204,7 @@ class TableManager:
             # Return an error message if an exception occurs.
             return f"Error: {e}"
 
-    def get(self, table: str, row: str, column_family=None, column_name=None):
+    def get(self, table: str, row: str, column_family=None, column_name=None, nversions:int = 1, version:float = None):
         """
         Retrieve data from a specified table in the database.
 
@@ -197,6 +213,8 @@ class TableManager:
             row (str): The row key to search for in the table.
             column_family (str, optional): The column family to filter the search (default is None).
             column_name (str, optional): The column name to filter the search (default is None).
+            versions (int, optional): The number of versions to retrieve (default is 1).
+            version (float, optional): The version to retrieve (default is None).
 
         Returns:
             pd.DataFrame: A DataFrame containing the retrieved data or error messages.
@@ -207,8 +225,8 @@ class TableManager:
 
         # Check if the specified table exists in the database.
         if table in self.tables:
-            # Retrieve data from the table based on the provided row key, column family, and column name.
-            data = self.tables[table].obtainTableInfoRowkeyWithMetadata(row, column_family, column_name)
+            # Retrieve data from the table based on the provided row key, column family, column name and number of versions.
+            data = self.tables[table].obtainTableInfoRowkeyWithMetadata(row, column_family, column_name, nversions, version)
             
             # If no data is found for the given row key, return an error DataFrame.
             if len(data) == 0:
@@ -363,6 +381,10 @@ class TableManager:
         if table in self.tables:
             # Retrieve the data for the specified table.
             data = self.tables[table]
+
+            # Verify if table is enable
+            if not data.isEnable:
+                return f"Error: The table '{table}' is disabled."
             
             found = False  # Initialize a flag to indicate if the value is found
 
@@ -424,6 +446,10 @@ class TableManager:
         if table in self.tables:
             # Retrieve the data for the specified table.
             data = self.tables[table]
+            # Verify if table is enable
+            if not data.isEnable:
+                return f"Error: The table '{table}' is disabled."
+
             found = False  # Initialize a flag to indicate if the value is found
             # Iterate through each column family in the data
             for family in data.columnFamilies:
@@ -472,6 +498,10 @@ class TableManager:
         if table in self.tables:
             # Retrieve the data for the specified table.
             data = self.tables[table]
+
+            # Verify if table is enable
+            if not data.isEnable:
+                return f"Error: The table '{table}' is disabled."
             
             # Extract and join all column family names into a single string.
             family_names = [family.name for family in data.columnFamilies]
@@ -518,6 +548,9 @@ class TableManager:
         
         # Check if the specified table exists in the database.
         if table in self.tables:
+            # Verify if table is enable
+            if not self.tables[table].isEnable:
+                return f"Error: The table '{table}' is disabled."
             # Call the insertOrUpdateRow method on the specified table.
             if self.tables[table].insertOrUpdateRow(rowKey, column_family, column, value):
                 # Save the updated data back to the file.
@@ -539,21 +572,41 @@ class TableManager:
         init_time = time.perf_counter()
         # Check if the specified table exists in the database.
         if table in self.tables:
+            # Verify if table is enable
+            if not self.tables[table].isEnable:
+                return f"Error: The table '{table}' is disabled."
+
             if 'delete' in args:
                 for column in self.tables[table].columnFamilies:
                     if column.name == args['delete']:
                         self.tables[table].columnFamilies.remove(column)
                         break
-            elif 'name' in args:
+            elif 'cf' in args:
                 if 'method' in args:
                     method = args['method']
                     if method == 'delete':
                         for column in self.tables[table].columnFamilies:
-                            if column.name == args['name']:
+                            if column.name == args['cf']:
                                 self.tables[table].columnFamilies.remove(column)
                                 break
+                    elif method == 'rename':
+                        toModify = None
+                        exist = False
+                        for column in self.tables[table].columnFamilies:
+                            if column.name == args['cf']:
+                                toModify = column
+                            if column.name == args['new_cf']:
+                                exist = True
+
+                        if toModify:
+                            if not exist:
+                                toModify.name = args['new_cf']
+                            else:
+                                return f"Error: Column family '{args['new_cf']}' already exists."
+                        else:
+                            return f"Error: Column family '{args['cf']}' could not be found."
                 else:
-                    self.tables[table].addColumnFamily(args['name'])
+                    self.tables[table].addColumnFamily(args['cf'])
 
             elif 'index' in args:
                 self.tables[table].setIndexed()

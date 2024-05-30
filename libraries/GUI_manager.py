@@ -58,7 +58,7 @@ class GUI_manager:
         self.message = customtkinter.CTkLabel(self.app, text=message)
         self.message.pack()
 
-    def validation(self, variables, expectedValues):
+    def validation(self, variables, expectedValues, optionalValues=[]):
         """
         Validates if the expected values are present in the variables dictionary.
 
@@ -70,7 +70,6 @@ class GUI_manager:
             tuple: A tuple containing a boolean indicating success or failure, and the value associated with the expected keys (or an empty string).
         """
         returnStatement = []
-        extras = []
         
         for key in expectedValues:
             # Check if the expected key is in the variables dictionary.
@@ -83,11 +82,20 @@ class GUI_manager:
             returnStatement.append(variables[key])
             variables.pop(key)
 
-        for key in variables:
-            # If the key is present, ensure the value is a string.
-            extras.append(variables[key])
+        # Add optional values to the return statement
+        for opval in optionalValues:
+            if opval in variables:
+                # If the key is present, ensure the value is a string or list.
+                if variables[opval]:
+                    returnStatement.append(variables[opval])	
+                else:
+                    # If the value is empty, return True and an empty string.
+                    returnStatement.append(True)
+            else:
+                # Represents the position of the optional value in the return statement
+                returnStatement.append(None)
 
-        return True, returnStatement + extras
+        return True, returnStatement
 
     def obtainOperation(self, command):
         operation, variables = parse_command(command)
@@ -102,17 +110,32 @@ class GUI_manager:
         elif operation == 'scan':
             init_time = time.perf_counter()
             # Perform validation for the 'is_enabled' operation
-            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table'], optionalValues=['nversions'])
+            # verify if the validation is successful
+            if not validation:
+                return
             # Extract table name from the return statement
             table = returnStatement[0]
+            # Extract nversions from the return statement
+            nversions = returnStatement[1] if returnStatement[1] else 1
+            # Ensure nversions is an integer
+            try:
+                nversions = int(nversions)
+            except ValueError:
+                self.messageLabel("Error: Invalid nversions format. Please provide a valid nversions.")
+                return
             # Call the scan method of tableManager
             # Return the result of the scan method and display it using change_table
-            result = self.tableManager.scan(table)
+            result = self.tableManager.scan(table, nversions=nversions)
+
             self.change_table(result, time.perf_counter() - init_time)
 
         elif operation == 'disable':
             # Perform validation for the 'is_enabled' operation
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            # verify if the validation is successful
+            if not validation:
+                return
             # Extract table name from the return statement
             table = returnStatement[0]
             # Call the disable method of tableManager
@@ -122,6 +145,9 @@ class GUI_manager:
         elif operation == 'enable':
             # Perform validation for the 'is_enabled' operation
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            # verify if the validation is successful
+            if not validation:
+                return
             # Extract table name from the return statement
             table = returnStatement[0]
             # Call the enable method of tableManager
@@ -131,6 +157,10 @@ class GUI_manager:
         elif operation == 'is_enabled':
             # Perform validation for the 'is_enabled' operation
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table'])
+            # verify if the validation is successful
+            if not validation:
+                return
+            
             # Extract table name from the return statement
             table = returnStatement[0]
             # Call the is_enabled method of tableManager
@@ -140,6 +170,9 @@ class GUI_manager:
         elif operation == 'create':
             # Perform validation for the 'create' operation
             validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'column_families'])
+            # Verify if the validation is successful
+            if not validation:
+                return
             # Extract table name and column families from the return statement
             # returnStatement should be a tuple with the table name and a list of column families
             table, column_families = returnStatement
@@ -153,27 +186,40 @@ class GUI_manager:
             # Measure the initial time for performance tracking
             initial_time = time.perf_counter()
             # Check if 'table' and 'row' are present in the variables dictionary.
-            validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row'])
+            validation, returnStatement = self.validation(variables=variables, expectedValues=['table', 'row'], optionalValues=['column', 'version', 'nversions'])
             if validation:
-                # Extract table name, row, and column name (if provided) from returnStatement
-                table, row, column_name = "", "", ""
-                if len(returnStatement) > 2:
-                    table, row, column_name = returnStatement
+                # Extract table name, row, column name and version (if provided) from returnStatement
+                table, row, column_name, version, nversions = returnStatement
+                if version:
+                    # Ensure version is an float
+                    try:
+                        version = float(version)
+                    except ValueError:
+                        self.messageLabel("Error: Invalid version format. Please provide a valid version.")
+                        return  # Exit if version conversion fails
+                    
+                if nversions:
+                    # Ensure nversions is an integer
+                    try:
+                        nversions = int(nversions)
+                    except ValueError:
+                        self.messageLabel("Error: Invalid nversions format. Please provide a valid nversions.")
+                        return
                 else:
-                    table, row = returnStatement
+                    nversions = 1
                 # If column name is provided, split it into column family and name
                 if column_name:
                     column_family = column_name.split(':')[0] if ':' in column_name else None
                     column_name = column_name.split(':')[1] if ':' in column_name else column_name
                     # Retrieve data from the tableManager based on provided parameters
-                    result = self.tableManager.get(table, row, column_family, column_name)
+                    result = self.tableManager.get(table, row, column_family, column_name, nversions=nversions, version=version)
                     # Calculate time taken for the operation
                     time_taken = time.perf_counter() - initial_time
                     # Update the table with the retrieved data and time taken
                     self.change_table(result, time_taken)
                 else:
                     # If column name is not provided or validation fails, retrieve data based on table and row only
-                    result = self.tableManager.get(table, row)
+                    result = self.tableManager.get(table, row, nversions=nversions, version=version)
                     # Calculate time taken for the operation
                     time_taken = time.perf_counter() - initial_time
                     # Update the table with the retrieved data and time taken

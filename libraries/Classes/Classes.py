@@ -93,15 +93,16 @@ class Column:
                 self.tree.add(newVal)
         
 
-    def obtainColumnInfoWithMetadata(self):
-        data = [ [rowKey.rowKey]+ rowKey.obtainActualVersion() for rowKey in self.rows]
+    def obtainColumnInfoWithMetadata(self, versions:int=1, version:float=None):
+        data = [ [rowKey.rowKey]+ ver for rowKey in self.rows for ver in rowKey.obtainNVersions(versions, version)]
         return data
     
-    def obtainColumnInfoWithMetadataRowkey(self, rowKey):
+    def obtainColumnInfoWithMetadataRowkey(self, rowKey, versions:int=1, version:float=None):
+
         rowKey = self.searchRow(rowKey)
         if rowKey is None:
             return []
-        data = [ [rowKey.rowKey]+ rowKey.obtainActualVersion()]
+        data = [[rowKey.rowKey] + ver for ver in rowKey.obtainNVersions(versions, version)]
         return data
 
     def obtainColumnInfo(self):
@@ -175,10 +176,10 @@ class ColumnFamily:
 
         return rows
     
-    def obtainColumnFamilyInfoWithMetadata(self):
+    def obtainColumnFamilyInfoWithMetadata(self, versions:int=1, version:float=None):
         data = []
         for column in self.columns.values():
-            metadataColumn = column.obtainColumnInfoWithMetadata()
+            metadataColumn = column.obtainColumnInfoWithMetadata(versions, version)
             # insert the column name in the second position
             for row in metadataColumn:
                 row.insert(1, f'{self.name}{':' if self.name != '' else ''}{column.name}')
@@ -187,18 +188,18 @@ class ColumnFamily:
 
         return data
     
-    def obtainColumnFamilyInfoRowkeyWithMetadata(self, rowkey, column=None):
+    def obtainColumnFamilyInfoRowkeyWithMetadata(self, rowkey, column=None, versions:int=1, version:float=None):
         data = []
         if column is None:
             for column in self.columns.values():
-                metadataColumn = column.obtainColumnInfoWithMetadataRowkey(rowkey)
+                metadataColumn = column.obtainColumnInfoWithMetadataRowkey(rowkey, versions, version)
                 for row in metadataColumn:
                     row.insert(1, f'{self.name}{':' if self.name != '' else ''}{column.name}')
                     data.append(row)
                 data+=metadataColumn
         else:
             if column in self.columns:
-                metadataColumn = self.columns[column].obtainColumnInfoWithMetadataRowkey(rowkey)
+                metadataColumn = self.columns[column].obtainColumnInfoWithMetadataRowkey(rowkey, versions, version)
                 for row in metadataColumn:
                     row.insert(1, f'{self.name}{':' if self.name != '' else ''}{column}')
                     data.append(row)
@@ -256,6 +257,17 @@ class Cell:
     
     def obtainActualVersion(self):
         return self.values[-1].obtainVersion()
+    
+    def obtainNVersions(self, n:int=1, version:float=None):
+        if version:
+            for value in self.values:
+                if value.creationDate == version:
+                    return [value.obtainVersion()]
+            return []
+
+        # Return the last n versions
+        return [value.obtainVersion() for value in self.values[-n:]]
+
 
     def isEmpty(self):
         return len(self.values) == 0
@@ -316,10 +328,10 @@ class Table:
             cf.setIndexed(self.indexed)
 
     
-    def obtainTableInfoWithMetadata(self):
+    def obtainTableInfoWithMetadata(self, versions:int=1, version:float=None):
         data = []
         for cf in self.columnFamilies:
-            metadataCF = cf.obtainColumnFamilyInfoWithMetadata()
+            metadataCF = cf.obtainColumnFamilyInfoWithMetadata(versions, version)
             for row in metadataCF:
                 data.append(row)
             data+=metadataCF
@@ -330,18 +342,18 @@ class Table:
         data = data.drop_duplicates()
         return data
     
-    def obtainTableInfoRowkeyWithMetadata(self, rowkey, columnFamily, column=None):
+    def obtainTableInfoRowkeyWithMetadata(self, rowkey, columnFamily, column=None, versions:int=1, version:float=None):
         data = []
         if columnFamily is None:
             for cf in self.columnFamilies:
-                metadataCF = cf.obtainColumnFamilyInfoRowkeyWithMetadata(rowkey)
+                metadataCF = cf.obtainColumnFamilyInfoRowkeyWithMetadata(rowkey, versions=versions, version=version)
                 for row in metadataCF:
                     data.append(row)
                 data+=metadataCF
         else:
             for cf in self.columnFamilies:
                 if cf.name == columnFamily:
-                    metadataCF = cf.obtainColumnFamilyInfoRowkeyWithMetadata(rowkey, column)
+                    metadataCF = cf.obtainColumnFamilyInfoRowkeyWithMetadata(rowkey, column, versions=versions, version=version)
                     for row in metadataCF:
                         data.append(row)
                     data+=metadataCF
