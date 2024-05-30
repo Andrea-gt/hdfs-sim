@@ -579,6 +579,9 @@ class TableManager:
             if 'delete' in args:
                 for column in self.tables[table].columnFamilies:
                     if column.name == args['delete']:
+                        # Verify if is the last column family
+                        if len(self.tables[table].columnFamilies) == 1:
+                            return f"Error: Table '{table}' must have at least one column family."
                         self.tables[table].columnFamilies.remove(column)
                         break
             elif 'cf' in args:
